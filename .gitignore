@@ -1,1 +1,10 @@
-# Created by .ignore support plugin (hsz.mobi)
+# Project exclude paths
+/venv/
+saved_model*
+.idea/
+sloter/vis*/
+data/
+*.pyc
+.vscode/
+scripts/
+temp*
