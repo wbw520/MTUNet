@@ -28,7 +28,7 @@ def get_args_parser():
 
     # train setting
     parser.add_argument('--fsl', default=True, type=bool, help='whether train backbone')
-    parser.add_argument('--lr', default=0.0001, type=float)
+    parser.add_argument('--lr', default=0.001, type=float)
     parser.add_argument('--lr_drop', default=30, type=int)
     parser.add_argument('--batch_size', default=1, type=int)
     parser.add_argument('--weight_decay', default=0.0001, type=float)

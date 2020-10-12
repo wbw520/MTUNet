@@ -138,11 +138,12 @@ def make_loader_simple(args):
     dataset_val = FSLLoader(args, "val", args.n_way, args.val_classes, args.val_episodes)
     sampler_train = torch.utils.data.RandomSampler(dataset_train)
     sampler_val = torch.utils.data.SequentialSampler(dataset_val)
-    batch_sampler_train = torch.utils.data.BatchSampler(sampler_train, args.batch_size, drop_last=True)
+    batch_sampler_train = torch.utils.data.BatchSampler(sampler_train, 256, drop_last=True)
     data_loader_train = DataLoader(dataset_train, batch_sampler=batch_sampler_train, num_workers=args.num_workers)
     data_loader_val = DataLoader(dataset_val, args.batch_size, sampler=sampler_val, num_workers=args.num_workers)
     print("load simple few over")
     return {"train": data_loader_train, "val": data_loader_val}
+
 
 # if __name__ == '__main__':
 #     parser = argparse.ArgumentParser('model training and evaluation script', parents=[get_args_parser()])

@@ -20,14 +20,12 @@ def evaluateTop5(logits, labels):
         return torch.eq(pred, labels_resize).sum().float().item()/labels.size(0)
 
 
-def confidenceinterval(array):
-    n = len(array)
-    confidence = 0.95
-    a = 1.0*np.array(array)
+def compute_confidence_interval(data):
+    a = 1.0 * np.array(data)
     m = np.mean(a)
-    fc = scipy.stats.sem(a)
-    h = fc * sp.stats.t._ppf((1+confidence)/2., n-1)/((n-1)**0.5)
-    return [m, h]
+    std = np.std(a)
+    pm = 1.96 * (std / np.sqrt(len(a)))
+    return m, pm
 
 
 class MetricLog():
@@ -71,3 +69,18 @@ class MetricLog():
             print("val CE loss", self.record["val"]["log_loss"])
             print("train attention loss", self.record["train"]["att_loss"])
             print("val attention loss", self.record["val"]["att_loss"])
+
+
+class MetricLogFew():
+    def __init__(self, args):
+        self.args = args
+        self.record = {"train": {"loss": [], "acc1": [], "acc5": []},
+                           "val": {"acc1": [], "accm": [], "accpm": []}}
+
+    def print_metric(self):
+        print("train loss:", self.record["train"]["loss"])
+        print("train acc1:", self.record["train"]["acc1"])
+        print("train acc5", self.record["train"]["acc5"])
+        print("val acc1", self.record["val"]["acc1"])
+        print("val accm", self.record["val"]["accm"])
+        print("val accpm", self.record["val"]["accpm"])
