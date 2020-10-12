@@ -1,5 +1,12 @@
 import argparse
 
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Unsupported value encountered.')
 
 def get_args_parser():
     parser = argparse.ArgumentParser('FSL Project', add_help=False)
@@ -27,7 +34,7 @@ def get_args_parser():
     parser.add_argument('--test_classes', default=20, type=int)
 
     # train setting
-    parser.add_argument('--fsl', default=True, type=bool, help='whether train backbone')
+    parser.add_argument('--fsl', default=True, type=str2bool, help='whether train backbone')
     parser.add_argument('--lr', default=0.001, type=float)
     parser.add_argument('--lr_drop', default=30, type=int)
     parser.add_argument('--batch_size', default=1, type=int)
@@ -35,18 +42,18 @@ def get_args_parser():
     parser.add_argument('--epochs', default=80, type=int)
     parser.add_argument('--img_size', default=80, help='path for save data')
     parser.add_argument('--aug', default=True, help='whether use augmentation')
-    parser.add_argument('--use_slot', default=True, type=bool, help='whether use slot module')
-    parser.add_argument('--fix_parameter', default=True, type=bool, help='whether fix parameter for backbone')
+    parser.add_argument('--use_slot', default=True, type=str2bool, help='whether use slot module')
+    parser.add_argument('--fix_parameter', default=True, type=str2bool, help='whether fix parameter for backbone')
 
     # slot setting
-    parser.add_argument('--use_pre', default=True, type=bool, help='whether use pre parameter for backbone')
+    parser.add_argument('--use_pre', default=True, type=str2bool, help='whether use pre parameter for backbone')
     parser.add_argument('--loss_status', default=1, type=int, help='positive or negative loss')
     parser.add_argument('--hidden_dim', default=64, type=int, help='dimension of to_k')
     parser.add_argument('--slots_per_class', default=1, type=int, help='number of slot for each class')
     parser.add_argument('--power', default=5, type=float, help='power of the slot loss')
     parser.add_argument('--to_k_layer', default=3, type=int, help='number of layers in to_k')
     parser.add_argument('--lambda_value', default="0.5", type=str, help='lambda  of slot loss')
-    parser.add_argument('--vis', default=False, type=bool, help='whether save slot visualization')
+    parser.add_argument('--vis', default=False, type=str2bool, help='whether save slot visualization')
     parser.add_argument('--vis_id', default=0, type=int, help='choose image to visualization')
 
     # data/machine set
