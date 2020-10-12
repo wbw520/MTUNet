@@ -119,7 +119,7 @@ class FSL(FSLPre):
         # self.af = 0.1
         self.lambda_value = args.lambda_value
         self.mlp = nn.Sequential(
-            nn.ReLU(inplace=True),
+            # nn.ReLU(inplace=True),
             nn.Linear(164, 2048),
             nn.ReLU(inplace=True),
             nn.Linear(2048, 2048),
