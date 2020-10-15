@@ -28,15 +28,16 @@ def get_args_parser():
 
     # train setting
     parser.add_argument('--fsl', default=True, type=bool, help='whether train backbone')
-    parser.add_argument('--lr', default=0.001, type=float)
+    parser.add_argument('--lr', default=0.0001, type=float)
     parser.add_argument('--lr_drop', default=30, type=int)
-    parser.add_argument('--batch_size', default=1, type=int)
+    parser.add_argument('--batch_size', default=6, type=int)
     parser.add_argument('--weight_decay', default=0.0001, type=float)
     parser.add_argument('--epochs', default=80, type=int)
     parser.add_argument('--img_size', default=80, help='path for save data')
     parser.add_argument('--aug', default=True, help='whether use augmentation')
     parser.add_argument('--use_slot', default=True, type=bool, help='whether use slot module')
     parser.add_argument('--fix_parameter', default=True, type=bool, help='whether fix parameter for backbone')
+    parser.add_argument('--similar', default=True, type=bool, help='whether use similar model')
 
     # slot setting
     parser.add_argument('--use_pre', default=True, type=bool, help='whether use pre parameter for backbone')

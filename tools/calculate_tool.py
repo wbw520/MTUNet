@@ -84,3 +84,18 @@ class MetricLogFew():
         print("val acc1", self.record["val"]["acc1"])
         print("val accm", self.record["val"]["accm"])
         print("val accpm", self.record["val"]["accpm"])
+
+
+class MetricLogSimilar():
+    def __init__(self, args):
+        self.args = args
+        self.record = {"train": {"loss": [], "accm": [], "accpm": []},
+                       "val": {"loss": [], "accm": [], "accpm": []}}
+
+    def print_metric(self):
+        print("train loss:", self.record["train"]["loss"])
+        print("train accm:", self.record["train"]["accm"])
+        print("train accpm", self.record["train"]["accpm"])
+        print("val loss:", self.record["val"]["loss"])
+        print("val accm", self.record["val"]["accm"])
+        print("val accpm", self.record["val"]["accpm"])

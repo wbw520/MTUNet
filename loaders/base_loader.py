@@ -59,14 +59,14 @@ class FSLLoader(Dataset):
         return self.n_episodes
 
     def get_fsl_split(self):
-        return np.random.permutation(self.n_classes)[:self.n_way]
+        return torch.randperm(self.n_classes)[:self.n_way]
 
     def get_fsl_imgs(self, split):
         img_support = []
         img_query = []
         mini_batch_cls = []
         for st in split:
-            current_cls = self.cls[st]
+            current_cls = self.cls[st.item()]
             mini_batch_cls.append(current_cls)
             copy_imgs = copy.deepcopy(self.data[current_cls])
             random.shuffle(copy_imgs)
@@ -79,10 +79,12 @@ class FSLLoader(Dataset):
     def over_loader(self, loader):
         imgs = []
         labels = []
+        name = []
         for i_batch, sample in enumerate(loader):
             imgs.append(torch.unsqueeze(sample["image"], dim=0))
             labels.append(torch.unsqueeze(sample["label"], dim=0))
-        return {"image": torch.cat(imgs, dim=0), "label": torch.cat(labels, dim=0)}
+            name.append(sample["name"])
+        return {"image": torch.cat(imgs, dim=0), "label": torch.cat(labels, dim=0), "name": name}
 
     def __getitem__(self, index):
         selected_cls = self.get_fsl_split()
