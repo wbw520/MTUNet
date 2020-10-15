@@ -10,6 +10,7 @@ from pathlib import Path
 from engine import train_one_epoch, evaluate
 from tools.calculate_tool import MetricLog
 from loaders.base_loader import make_loaders
+import os
 
 
 def main(args):
@@ -37,6 +38,7 @@ def main(args):
     params = [p for p in model.parameters() if p.requires_grad]
 
     output_dir = Path(args.output_dir)
+    os.makedirs(output_dir, exist_ok=True)
     optimizer = torch.optim.AdamW(params, lr=args.lr)
     # optimizer = torch.optim.SGD(params, momentum=0.9, lr=args.lr,
     #                             weight_decay=args.weight_decay)

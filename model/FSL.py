@@ -116,10 +116,10 @@ class FSL(FSLPre):
     def __init__(self, args):
         super(FSL, self).__init__(args)
         self.args = args
-        self.af = 0.1
+        # self.af = 0.1
         self.lambda_value = args.lambda_value
         self.mlp = nn.Sequential(
-            nn.ReLU(inplace=True),
+            # nn.ReLU(inplace=True),
             nn.Linear(164, 2048),
             nn.ReLU(inplace=True),
             nn.Linear(2048, 2048),
@@ -127,11 +127,11 @@ class FSL(FSLPre):
             nn.Linear(2048, 64),
         )
 
-    def get_gausi(self, slots, size):
-        gau = torch.randn(size, requires_grad=False)
-        gau = gau.cuda()
-        slots = slots + (self.af**0.5)*gau
-        return slots
+    # def get_gausi(self, slots, size):
+    #     gau = torch.randn(size, requires_grad=False)
+    #     gau = gau.cuda()
+    #     slots = slots + (self.af**0.5)*gau
+    #     return slots
 
     def forward(self, slots, supports, query):
         # slots = F.normalize(slots, dim=2)
