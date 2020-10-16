@@ -8,9 +8,8 @@ class ScouterAttention(nn.Module):
     def __init__(self, args, num_classes, slots_per_class, dim, iters=3, eps=1e-8, vis=False, vis_id=0, loss_status=1, power=1, to_k_layer=1):
         super().__init__()
         self.args = args
-        self.num_classes = num_classes
         self.slots_per_class = slots_per_class
-        self.num_slots = num_classes * slots_per_class
+        self.num_slots = self.args.num_slot * slots_per_class
         self.iters = iters
         self.eps = eps
         self.scale = dim ** -0.5
@@ -84,6 +83,7 @@ class ScouterAttention(nn.Module):
         slot_loss = torch.mean(attn_relu, (1, 2))  # * self.slots_per_class
 
         if self.args.similar:
+            # print(torch.argmax(torch.mean(updates, dim=(0, 2))))
             return updates, torch.pow(slot_loss, self.power)
         else:
             return self.loss_status*torch.sum(updates, dim=2, keepdim=False), torch.pow(slot_loss, self.power)

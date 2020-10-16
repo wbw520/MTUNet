@@ -54,9 +54,15 @@ class SimilarityLoss(nn.Module):
 
     def get_metric(self, metric_type):
         METRICS = {
-            'euclidean': lambda gallery, query: torch.sum((query[:, :, None, :, :] - gallery[:, None, :, :, :]) ** 2, (3, 4)),
+            'euclidean': lambda gallery, query: torch.sum((query[:, :, None, :] - gallery[:, None, :, :]) ** 2, 3),
         }
         return METRICS[metric_type]
+
+    def get_selected(self, data, index):
+        record_list = []
+        for i in range(len(index)):
+            record_list.append(data[i, :, index[i], :])
+        return torch.cat(record_list, dim=0)
 
     def forward(self, out_f, labels_support, labels_query, att_loss):
         # att_loss_support = att_loss[:self.args.n_way*self.args.n_shot]
@@ -65,8 +71,14 @@ class SimilarityLoss(nn.Module):
         out_support = out_f[:b*self.args.n_way*self.args.n_shot, :, :]
         out_query = out_f[b*self.args.n_way*self.args.n_shot:, :, :]
 
-        out_support = out_support.reshape(b, self.args.n_way, self.args.n_shot, self.args.n_way, -1).mean(2)
-        out_query = out_query.reshape(b, self.args.n_way*self.args.query, self.args.n_way, -1)
+        out_support = out_support.reshape(b*self.args.n_way, self.args.n_shot, self.args.num_slot, -1).mean(1)
+        out_support = torch.unsqueeze(out_support, dim=1)
+        max_s = torch.argmax(out_support.mean(3), dim=2).reshape(-1)
+
+        out_query = out_query.reshape(b*self.args.n_way, self.args.query, self.args.num_slot, -1)
+
+        out_support = self.get_selected(out_support, max_s).reshape(b, self.args.n_way, -1)
+        out_query = self.get_selected(out_query, max_s).reshape(b, self.args.n_way*self.args.query, -1)
 
         difference = self.get_metric('euclidean')(out_support, out_query)
         logits = F.log_softmax(-difference, dim=2)

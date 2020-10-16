@@ -113,7 +113,7 @@ def make_transform(args, mode):
             normalize,
         ]
         )
-    if mode == "val" or mode == "inference":
+    if mode == "val" or mode == "test":
         return Compose([
             Resize((args.img_size, args.img_size)),
             normalize,

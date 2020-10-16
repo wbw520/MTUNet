@@ -36,18 +36,18 @@ def main(args):
         lr_scheduler.step()
 
         if args.output_dir:
-            checkpoint_paths = [output_dir / 'similarity_checkpoint.pth']
-            if record["val"]["accm"][epoch-1] > max_acc1:
-                print("get higher acc save current model")
-                max_acc1 = record["val"]["accm"][epoch-1]
-                for checkpoint_path in checkpoint_paths:
-                    prt.save_on_master({
-                        'model': model.state_dict(),
-                        'optimizer': optimizer.state_dict(),
-                        'lr_scheduler': lr_scheduler.state_dict(),
-                        'epoch': epoch,
-                        'args': args,
-                    }, checkpoint_path)
+            checkpoint_paths = [output_dir / ("similarity_checkpoint" + str(epoch) + ".pth")]
+            # if record["val"]["accm"][epoch-1] > max_acc1:
+            #     print("get higher acc save current model")
+            #     max_acc1 = record["val"]["accm"][epoch-1]
+            for checkpoint_path in checkpoint_paths:
+                prt.save_on_master({
+                    'model': model.state_dict(),
+                    'optimizer': optimizer.state_dict(),
+                    'lr_scheduler': lr_scheduler.state_dict(),
+                    'epoch': epoch,
+                    'args': args,
+                }, checkpoint_path)
         log.print_metric()
 
     total_time = time.time() - start_time
