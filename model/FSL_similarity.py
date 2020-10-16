@@ -84,7 +84,7 @@ class SimilarityLoss(nn.Module):
         logits = F.log_softmax(-difference, dim=2)
         logits = logits.reshape(b, self.args.query, self.args.n_way, -1)
         labels_query = labels_query.reshape(b, self.args.query, self.args.n_way, -1)
-        loss = -logits.gather(3, labels_query).squeeze().view(-1).mean()
+        loss = -logits.gather(3, labels_query).squeeze().view(-1).mean() + float(self.args.lambda_value) * att_loss
 
         _, y_hat = logits.max(3)
         acc = torch.eq(y_hat, labels_query.squeeze()).float().mean()

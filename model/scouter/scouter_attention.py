@@ -80,7 +80,7 @@ class ScouterAttention(nn.Module):
             updates = new_updates.to(updates.device)
 
         attn_relu = torch.relu(attn)
-        slot_loss = torch.mean(attn_relu, (1, 2))  # * self.slots_per_class
+        slot_loss = torch.mean(attn_relu, (0, 1, 2))  # * self.slots_per_class
 
         if self.args.similar:
             # print(torch.argmax(torch.mean(updates, dim=(0, 2))))

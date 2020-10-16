@@ -89,13 +89,15 @@ class MetricLogFew():
 class MetricLogSimilar():
     def __init__(self, args):
         self.args = args
-        self.record = {"train": {"loss": [], "accm": [], "accpm": []},
-                       "val": {"loss": [], "accm": [], "accpm": []}}
+        self.record = {"train": {"loss": [], "accm": [], "accpm": [], "att_loss": []},
+                       "val": {"loss": [], "accm": [], "accpm": [], "att_loss": []}}
 
     def print_metric(self):
         print("train loss:", self.record["train"]["loss"])
+        print("train att loss", self.record["train"]["att_loss"])
         print("train accm:", self.record["train"]["accm"])
         print("train accpm", self.record["train"]["accpm"])
         print("val loss:", self.record["val"]["loss"])
+        print("val att loss", self.record["val"]["att_loss"])
         print("val accm", self.record["val"]["accm"])
         print("val accpm", self.record["val"]["accpm"])

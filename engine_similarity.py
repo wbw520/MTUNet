@@ -8,6 +8,7 @@ def train_one_epoch(model, data_loader, device, record, epoch, optimizer, criter
     model.train()
     L = len(data_loader)
     running_loss = 0.0
+    running_att_loss = 0.0
     running_acc_95 = []
     print("start train: " + str(epoch))
     for i_batch, sample_batch in enumerate(tqdm(data_loader)):
@@ -25,9 +26,11 @@ def train_one_epoch(model, data_loader, device, record, epoch, optimizer, criter
 
         a = loss.item()
         running_loss += a
+        running_att_loss += att_loss.item()
         running_acc_95.append(round(acc.item(), 4))
 
     record["train"]["loss"].append(round(running_loss/L, 3))
+    record["train"]["att_loss"].append(round(running_att_loss/L, 6))
     record["train"]["accm"].append(round(cal.compute_confidence_interval(running_acc_95)[0], 4))
     record["train"]["accpm"].append(round(cal.compute_confidence_interval(running_acc_95)[1], 4))
 
@@ -37,6 +40,7 @@ def evaluate(model, data_loader, device, record, epoch, criterion):
     model.eval()
     print("start val: " + str(epoch))
     running_loss = 0.0
+    running_att_loss = 0.0
     running_acc_95 = []
     L = len(data_loader)
     for i_batch, sample_batch in enumerate(tqdm(data_loader)):
@@ -49,8 +53,10 @@ def evaluate(model, data_loader, device, record, epoch, criterion):
         loss, acc = criterion(out, labels_support, labels_query, att_loss)
         a = loss.item()
         running_loss += a
+        running_att_loss += att_loss.item()
         running_acc_95.append(round(acc.item(), 4))
 
     record["val"]["loss"].append(round(running_loss/L, 3))
+    record["val"]["att_loss"].append(round(running_att_loss/L, 6))
     record["val"]["accm"].append(round(cal.compute_confidence_interval(running_acc_95)[0], 4))
     record["val"]["accpm"].append(round(cal.compute_confidence_interval(running_acc_95)[1], 4))
