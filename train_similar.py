@@ -8,6 +8,7 @@ import tools.prepare_things as prt
 from pathlib import Path
 from engine_similarity import train_one_epoch, evaluate
 from tools.calculate_tool import MetricLogSimilar
+from tools.Adabelif import AdaBelief
 from loaders.base_loader import make_loaders
 
 
@@ -21,7 +22,8 @@ def main(args):
     params = [p for p in model.parameters() if p.requires_grad]
 
     output_dir = Path(args.output_dir)
-    optimizer = torch.optim.AdamW(params, lr=args.lr)
+    # optimizer = torch.optim.AdamW(params, lr=args.lr)
+    optimizer = AdaBelief(params, lr=args.lr)
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.lr_drop)
 
     print("Start training")
@@ -36,7 +38,7 @@ def main(args):
         lr_scheduler.step()
 
         if args.output_dir:
-            checkpoint_paths = [output_dir / ("similarity_checkpoint" + str(epoch) + ".pth")]
+            checkpoint_paths = [output_dir / ("similarity_checkpoint_ab_att" + str(epoch) + ".pth")]
             # if record["val"]["accm"][epoch-1] > max_acc1:
             #     print("get higher acc save current model")
             #     max_acc1 = record["val"]["accm"][epoch-1]
