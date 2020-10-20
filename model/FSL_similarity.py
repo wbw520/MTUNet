@@ -67,8 +67,8 @@ class SimilarityLoss(nn.Module):
         cls = input.size()[1]
         for i in range(b):
             temp_index = []
+            sprted_slot, indices_slot = torch.sort(input[i], descending=True)
             for j in range(cls):
-                sprted_slot, indices_slot = torch.sort(input[i], descending=True)
                 ss = 0
                 while not (indices_slot[j][ss] not in temp_index):
                     ss += 1
