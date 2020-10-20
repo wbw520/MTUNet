@@ -83,7 +83,8 @@ class ScouterAttention(nn.Module):
         slot_loss = torch.mean(attn_relu, (0, 1, 2))  # * self.slots_per_class
 
         if self.args.similar:
-            # print(torch.argmax(torch.mean(updates, dim=(0, 2))))
+            # print(updates.size())
+            # print(torch.argmax(torch.mean(updates, dim=2), dim=1))
             return updates, torch.pow(slot_loss, self.power)
         else:
             return self.loss_status*torch.sum(updates, dim=2, keepdim=False), torch.pow(slot_loss, self.power)

@@ -24,7 +24,7 @@ def evaluate(model, data_loader, device, criterion):
         labels_support = sample_batch["support"]["label"].to(device, dtype=torch.int64)
         total_input = torch.cat([inputs_support, inputs_query], dim=0)
         out, att_loss = model(total_input)
-        loss, acc = criterion(out, labels_support, labels_query, att_loss)
+        loss, acc = criterion(out, labels_support, labels_query, att_loss, "train")
         a = loss.item()
         running_loss += a
         running_acc_95.append(round(acc.item(), 4))
@@ -37,12 +37,12 @@ def evaluate(model, data_loader, device, criterion):
 def main():
     criterien = SimilarityLoss(args)
     model = FSLSimilarity(args)
-    model_name = "similarity_checkpoint.pth"
+    model_name = "similarity_checkpoint_hehe.pth"
     checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
     model.load_state_dict(checkpoint["model"])
     model.to(device)
     model.eval()
-    dataset_test = make_loaders(args)["test"]
+    dataset_test = make_loaders(args)["val"]
     evaluate(model, dataset_test, device, criterien)
 
 

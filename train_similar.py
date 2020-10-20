@@ -1,6 +1,8 @@
 from args_setting import *
 from model.model_tools import print_param
-from model.FSL_similarity import FSLSimilarity, SimilarityLoss
+from model.FSL_similarity import FSLSimilarity
+from model.FSL_similarity import SimilarityLoss
+# from temp import SimilarityLoss
 import torch
 import time
 import datetime
@@ -38,7 +40,7 @@ def main(args):
         lr_scheduler.step()
 
         if args.output_dir:
-            checkpoint_paths = [output_dir / ("similarity_checkpoint_ab_att" + str(epoch) + ".pth")]
+            checkpoint_paths = [output_dir / ("similarity_checkpoint_ab0_att" + str(epoch) + ".pth")]
             # if record["val"]["accm"][epoch-1] > max_acc1:
             #     print("get higher acc save current model")
             #     max_acc1 = record["val"]["accm"][epoch-1]

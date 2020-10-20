@@ -6,6 +6,7 @@ import tools.calculate_tool as cal
 
 def train_one_epoch(model, data_loader, device, record, epoch, optimizer, criterion):
     model.train()
+    criterion.train()
     L = len(data_loader)
     running_loss = 0.0
     running_att_loss = 0.0
@@ -20,7 +21,7 @@ def train_one_epoch(model, data_loader, device, record, epoch, optimizer, criter
 
         optimizer.zero_grad()
         out, att_loss = model(total_input)
-        loss, acc = criterion(out, labels_support, labels_query, att_loss, 'train')
+        loss, acc = criterion(out, labels_support, labels_query, att_loss, "train")
         loss[0].backward()
         optimizer.step()
 
@@ -38,6 +39,7 @@ def train_one_epoch(model, data_loader, device, record, epoch, optimizer, criter
 @torch.no_grad()
 def evaluate(model, data_loader, device, record, epoch, criterion):
     model.eval()
+    criterion.eval()
     print("start val: " + str(epoch))
     running_loss = 0.0
     running_att_loss = 0.0
@@ -50,7 +52,7 @@ def evaluate(model, data_loader, device, record, epoch, criterion):
         labels_support = sample_batch["support"]["label"].to(device, dtype=torch.int64)
         total_input = torch.cat([inputs_support, inputs_query], dim=0)
         out, att_loss = model(total_input)
-        loss, acc = criterion(out, labels_support, labels_query, att_loss, 'val')
+        loss, acc = criterion(out, labels_support, labels_query, att_loss, "val")
         a = loss.item()
         running_loss += a
         running_att_loss += att_loss.item()
