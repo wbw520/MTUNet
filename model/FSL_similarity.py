@@ -61,32 +61,12 @@ class SimilarityLoss(nn.Module):
         for i in range(len(index)):
             record_list.append(data[i, :, index[i], :])
         return torch.cat(record_list, dim=0)
-    def cover_select(self, input):
-        index_list = []
-        b = input.size()[0]
-        cls = input.size()[1]
-        for i in range(b):
-            temp_index = []
-            sprted_slot, indices_slot = torch.sort(input[i], descending=True)
-            for j in range(cls):
-                ss = 0
-                while not (indices_slot[j][ss] not in temp_index):
-                    ss += 1
-                temp_index.append(indices_slot[j][ss])
-                index_list.append(indices_slot[j][ss].unsqueeze(0))
-        return torch.cat(index_list, dim=0)
-    def get_22(self, input, b, max):
-        input = input.reshape(b, self.args.n_way*self.args.query, self.args.num_slot, -1)
-        imgs = input.size()[1]
+    def get_22(self, input, b):
+        input = input.reshape(b*self.args.n_way*self.args.query, self.args.num_slot, -1)
+        index_max = torch.argmax(torch.mean(input, dim=2), dim=1)
         record_list = []
-        for j in range(b):
-            record_temp = []
-            for s in range(imgs):
-                for i in range(len(max[j])):
-                    record_temp.append(input[j, s, max[j][i], :].unsqueeze(0))
-                new_temp = torch.cat(record_temp, dim=0)
-                index_max = torch.argmax(torch.mean(new_temp, dim=1))
-                record_list.append(new_temp[index_max, :].unsqueeze(0))
+        for j in range(index_max.size()[0]):
+            record_list.append(input[j, index_max[j], :].unsqueeze(0))
         return torch.cat(record_list, dim=0)
     def forward(self, out_f, labels_support, labels_query, att_loss, mode):
         # att_loss_support = att_loss[:self.args.n_way*self.args.n_shot]
@@ -96,16 +76,15 @@ class SimilarityLoss(nn.Module):
         out_query = out_f[b*self.args.n_way*self.args.n_shot:, :, :]
         out_support = out_support.reshape(b*self.args.n_way, self.args.n_shot, self.args.num_slot, -1).mean(1)
         out_support = torch.unsqueeze(out_support, dim=1)
-        # max_s = torch.argmax(out_support.mean(3), dim=2).reshape(-1)
-        max_s = self.cover_select(out_support.mean(3).reshape(b, self.args.n_way, self.args.num_slot))
+        max_s = torch.argmax(out_support.mean(3), dim=2).reshape(-1)
         out_query = out_query.reshape(b*self.args.n_way, self.args.query, self.args.num_slot, -1)
-        out_support = self.get_selected(out_support, max_s.reshape(-1)).reshape(b, self.args.n_way, -1)
+        out_support = self.get_selected(out_support, max_s).reshape(b, self.args.n_way, -1)
         if mode == "train":
             temp = out_query.clone()
-            out_query = self.get_selected(out_query, max_s.reshape(-1)).reshape(b, self.args.n_way*self.args.query, -1)
-            out_query_t = self.get_22(temp, b, max_s.reshape(b, -1)).reshape(b, self.args.n_way*self.args.query, -1)
+            out_query = self.get_selected(out_query, max_s).reshape(b, self.args.n_way*self.args.query, -1)
+            out_query_t = self.get_22(temp, b).reshape(b, self.args.n_way*self.args.query, -1)
         else:
-            out_query = self.get_22(out_query, b, max_s.reshape(b, -1)).reshape(b, self.args.n_way*self.args.query, -1)
+            out_query = self.get_22(out_query, b).reshape(b, self.args.n_way*self.args.query, -1)
         difference = self.get_metric('euclidean')(out_support, out_query)
         logits = F.log_softmax(-difference, dim=2)
         logits = logits.reshape(b, self.args.query, self.args.n_way, -1)
@@ -117,10 +96,11 @@ class SimilarityLoss(nn.Module):
             difference_t = self.get_metric('euclidean')(out_support, out_query_t)
             logits_t = F.log_softmax(-difference_t, dim=2)
             logits_t = logits_t.reshape(b, self.args.query, self.args.n_way, -1)
-            loss_t = -logits_t.gather(3, labels_query).squeeze().view(-1).mean()
+            loss_t = -logits_t.gather(3, labels_query).squeeze().view(-1).mean() + float(self.args.lambda_value) * att_loss
             _, y_hat_t = logits_t.max(3)
             acc_t = torch.eq(y_hat_t, labels_query.squeeze()).float().mean()
         if mode == "train":
             return [loss, loss_t], [acc, acc_t]
         else:
             return loss, acc
+            
