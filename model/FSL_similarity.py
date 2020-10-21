@@ -5,6 +5,7 @@ from model.scouter.scouter_attention import ScouterAttention
 from model.scouter.position_encode import build_position_encoding
 import torch.nn as nn
 import torch.nn.functional as F
+
 def load_base(args):
     bone = base_bone.__dict__[args.base_model](num_classes=args.num_classes, drop_dim=False, extract=False)
     checkpoint = torch.load(f"{args.output_dir}/" + "simple_few_checkpoint.pth", map_location=args.device)
@@ -12,6 +13,7 @@ def load_base(args):
     bone.avg_pool = Identical()
     bone.linear = Identical()
     return bone
+
 class FSLSimilarity(nn.Module):
     def __init__(self, args):
         super(FSLSimilarity, self).__init__()
@@ -39,13 +41,23 @@ class FSLSimilarity(nn.Module):
         x = x.reshape((b, n, -1)).permute((0, 2, 1))
         x_pe = x_pe.reshape((b, n, -1)).permute((0, 2, 1))
         return x_pe, x
+
+def euclidean(support, query, max_s):
+    support_size = support.size()
+    support_new = torch.zeros((support_size[0],support_size[1],1,support_size[3]), dtype=support.dtype).to(support.device)
+
+    for i in range(support_size[0]):
+        for j in range(support_size[1]):
+            support_new[i,j,0] = support[i,j,j]
+    return torch.sum((query[:, :, :, None, :] - support_new[:, None, :, :, :]) ** 2, dim=(3, 4))
+
 class SimilarityLoss(nn.Module):
     def __init__(self, args):
         super(SimilarityLoss, self).__init__()
         self.args = args
     def get_metric(self, metric_type):
         METRICS = {
-            'euclidean': lambda gallery, query: torch.sum((query[:, :, None, :, :] - gallery[:, None, :, :, :]) ** 2, dim=(3, 4)),
+            'euclidean': euclidean,
         }
         return METRICS[metric_type]
     def max_select(self, input):
@@ -75,7 +87,7 @@ class SimilarityLoss(nn.Module):
         max_s = self.max_select(out_support.mean(-1).squeeze(2))
         out_support = self.get_slots(out_support, max_s.reshape(b, 1, 1, -1, 1).expand(b, self.args.n_way, self.args.n_shot, -1, self.args.hidden_dim)).reshape(b, self.args.n_way, self.args.n_way, -1)
         out_query = self.get_slots(out_query, max_s.reshape(b, 1, 1, -1, 1).expand(b, self.args.n_way, self.args.query, -1, self.args.hidden_dim)).reshape(b, self.args.n_way*self.args.query, self.args.n_way, -1)
-        difference = self.get_metric('euclidean')(out_support, out_query)
+        difference = self.get_metric('euclidean')(out_support, out_query, max_s)
         logits = F.log_softmax(-difference, dim=2)
         logits = logits.reshape(b, self.args.query, self.args.n_way, -1)
         labels_query = labels_query.reshape(b, self.args.query, self.args.n_way, -1)
