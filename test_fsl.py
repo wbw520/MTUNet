@@ -8,7 +8,11 @@ from loaders.base_loader import make_loaders
 from PIL import Image
 import numpy as np
 import torch
+import os
 
+os.makedirs('vis/', exist_ok=True)
+os.makedirs('vis/support', exist_ok=True)
+os.makedirs('vis/query', exist_ok=True)
 
 def test(args, model, img, image, record_name):
     image = image.to(device, dtype=torch.float32)
@@ -54,7 +58,7 @@ def apply_colormap_on_image(org_im, activation, colormap_name):
 
 def main():
     model = FSLSimilarity(args)
-    model_name = "similarity_checkpoint_ab0_att1.pth"
+    model_name = "similarity_checkpoint_ab4_att0.pth"
     checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
     model.load_state_dict(checkpoint["model"])
     model.to(device)
