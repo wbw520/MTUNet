@@ -72,8 +72,10 @@ class SimilarityLoss(nn.Module):
         cls = input.size()[1]
         for i in range(b):
             temp_index = []
+            sprted_slot, indices_slot = torch.sort(input[i], descending=True)
+            # print(input[i])
+            # print(indices_slot)
             for j in range(cls):
-                sprted_slot, indices_slot = torch.sort(input[i], descending=True)
                 ss = 0
                 while not (indices_slot[j][ss] not in temp_index):
                     ss += 1
@@ -91,6 +93,7 @@ class SimilarityLoss(nn.Module):
         out_support = torch.mean(out_support.reshape(b, self.args.n_way, self.args.n_shot, self.args.num_slot, -1), dim=2, keepdim=True)
         out_query = out_query.reshape(b, self.args.n_way, self.args.query, self.args.num_slot, -1)
         max_s = self.max_select(out_support.mean(-1).squeeze(2))
+        # print(max_s)
         out_support = self.get_slots(out_support, max_s.reshape(b, 1, 1, -1, 1).expand(b, self.args.n_way, self.args.n_shot, -1, self.args.hidden_dim)).reshape(b, self.args.n_way, self.args.n_way, -1)
         out_query = self.get_slots(out_query, max_s.reshape(b, 1, 1, -1, 1).expand(b, self.args.n_way, self.args.query, -1, self.args.hidden_dim)).reshape(b, self.args.n_way*self.args.query, self.args.n_way, -1)
         difference = self.get_metric('euclidean')(F.normalize(out_support, dim=-1), F.normalize(out_query, dim=-1))
