@@ -42,6 +42,12 @@ class FSLSimilarity(nn.Module):
         x_pe = x_pe.reshape((b, n, -1)).permute((0, 2, 1))
         return x_pe, x
 
+# def get_gausi(self, slots, size):
+#     gau = torch.randn(size, requires_grad=False)
+#     gau = gau.cuda()
+#     slots = slots + (self.af**0.5)*gau
+#     return slots
+
 def euclidean(support, query):
     support_size = support.size()
     support_new = torch.zeros((support_size[0],support_size[1],1,support_size[3]), dtype=support.dtype).to(support.device)
