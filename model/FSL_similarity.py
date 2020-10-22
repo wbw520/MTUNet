@@ -42,7 +42,7 @@ class FSLSimilarity(nn.Module):
         x_pe = x_pe.reshape((b, n, -1)).permute((0, 2, 1))
         return x_pe, x
 
-def euclidean(support, query, max_s):
+def euclidean(support, query):
     support_size = support.size()
     support_new = torch.zeros((support_size[0],support_size[1],1,support_size[3]), dtype=support.dtype).to(support.device)
 
@@ -87,7 +87,7 @@ class SimilarityLoss(nn.Module):
         max_s = self.max_select(out_support.mean(-1).squeeze(2))
         out_support = self.get_slots(out_support, max_s.reshape(b, 1, 1, -1, 1).expand(b, self.args.n_way, self.args.n_shot, -1, self.args.hidden_dim)).reshape(b, self.args.n_way, self.args.n_way, -1)
         out_query = self.get_slots(out_query, max_s.reshape(b, 1, 1, -1, 1).expand(b, self.args.n_way, self.args.query, -1, self.args.hidden_dim)).reshape(b, self.args.n_way*self.args.query, self.args.n_way, -1)
-        difference = self.get_metric('euclidean')(out_support, out_query, max_s)
+        difference = self.get_metric('euclidean')(out_support, out_query)
         logits = F.log_softmax(-difference, dim=2)
         logits = logits.reshape(b, self.args.query, self.args.n_way, -1)
         labels_query = labels_query.reshape(b, self.args.query, self.args.n_way, -1)
