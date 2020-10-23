@@ -23,7 +23,7 @@ def main(args):
     model_name = "scouter_checkpoint.pth"
     model.to(device)
     checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
-    model.load_state_dict(checkpoint["model"])
+    model.load_state_dict(checkpoint["model"], strict=False)
 
     print_param(model)
     params = [p for p in model.parameters() if p.requires_grad]

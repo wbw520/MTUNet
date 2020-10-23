@@ -26,9 +26,20 @@ class FSLSimilarity(nn.Module):
         self.conv1x1 = nn.Conv2d(self.channel, args.hidden_dim, kernel_size=(1, 1), stride=(1, 1))
         self.slot = ScouterAttention(args, args.n_way, self.slots_per_class, args.hidden_dim, vis=args.vis,
                                      vis_id=args.vis_id, loss_status=args.loss_status, power=args.power, to_k_layer=args.to_k_layer)
+        fix_parameter(self.conv1x1, [""], mode="fix")
         fix_parameter(self.slot, [""], mode="fix")
         self.position_emb = build_position_encoding('sine', hidden_dim=args.hidden_dim)
         self.lambda_value = float(args.lambda_value)
+        self.classifier = nn.Sequential(
+                                        nn.Linear(args.hidden_dim*args.n_way*2, 1024),
+                                        nn.ReLU(),
+                                        # nn.Linear(args.n_way*args.n_way*args.hidden_dim+args.n_way*args.hidden_dim, 2048),
+                                        nn.Linear(1024, 1024),
+                                        nn.ReLU(),
+                                        nn.Linear(1024, 1),
+                                        # nn.Linear(1024, args.n_way),
+                                        nn.Sigmoid(),
+        )
 
 
     def forward(self, x):
@@ -66,16 +77,7 @@ class SimilarityLoss(nn.Module):
     def __init__(self, args):
         super(SimilarityLoss, self).__init__()
         self.args = args
-        self.classifier = nn.Sequential(
-                                        nn.Linear(args.hidden_dim, 1024),
-                                        nn.ReLU(),
-                                        # nn.Linear(args.n_way*args.n_way*args.hidden_dim+args.n_way*args.hidden_dim, 2048),
-                                        nn.Linear(1024, 1024),
-                                        nn.ReLU(),
-                                        nn.Linear(1024, 1),
-                                        # nn.Linear(1024, args.n_way),
-                                        nn.Sigmoid(),
-        )
+        
         self.BCEloss = nn.BCELoss()
 
     def get_metric(self, metric_type):
@@ -101,7 +103,7 @@ class SimilarityLoss(nn.Module):
         return torch.cat(index_list, dim=0)
     def get_slots(self, input, max):
         return torch.gather(input, 3, max)
-    def forward(self, out_f, labels_support, labels_query, att_loss, mode):
+    def forward(self, out_f, labels_support, labels_query, att_loss, mode, classifier):
         b = labels_query.size()[0]
         # att_loss_support = att_loss[:self.args.n_way*self.args.n_shot]
         # att_loss_query = att_loss[self.args.n_way*self.args.n_shot:]
@@ -113,12 +115,17 @@ class SimilarityLoss(nn.Module):
         # print(max_s)
         out_support = self.get_slots(out_support, max_s.reshape(b, 1, 1, -1, 1).expand(b, self.args.n_way, self.args.n_shot, -1, self.args.hidden_dim)).reshape(b, self.args.n_way, self.args.n_way, -1)
         out_query = self.get_slots(out_query, max_s.reshape(b, 1, 1, -1, 1).expand(b, self.args.n_way, self.args.query, -1, self.args.hidden_dim)).reshape(b, self.args.n_way*self.args.query, self.args.n_way, -1)
-        difference = self.get_metric('euclidean')(F.normalize(out_support, dim=-1), F.normalize(out_query, dim=-1))
+        # difference = self.get_metric('euclidean')(F.normalize(out_support, dim=-1), F.normalize(out_query, dim=-1))
         # print(difference.reshape((b, out_query.size(1), -1)).shape)
         # logits = F.log_softmax(-difference, dim=2)
-        input_fc = difference#.reshape((b, out_query.size(1), -1))
+        input_fc = torch.cat(
+            [out_support.reshape((b, self.args.n_way, -1)).unsqueeze(1).expand(-1, self.args.n_way*self.args.query, -1, -1),
+            out_query.reshape((b, self.args.n_way*self.args.query, -1)).expand(self.args.n_way,-1,-1,-1).transpose(0,2).transpose(0,1)],
+            dim = -1
+        )
+        # input_fc = difference#.reshape((b, out_query.size(1), -1))
         # input_fc = torch.cat([out_support.reshape((b, -1)).unsqueeze(1).transpose(1,0).expand((out_query.size(1), b, -1)).transpose(1,0), out_query.reshape((b,out_query.size(1), -1))], dim=-1).reshape(b*out_query.size(1),-1)
-        output_fc = self.classifier(input_fc).squeeze(-1)
+        output_fc = classifier(input_fc).squeeze(-1)
         labels_query_onehot = torch.zeros(labels_query.size()+(5,), dtype=labels_query.dtype).to(labels_query.device)
         labels_query_onehot.scatter_(-1, labels_query.unsqueeze(-1), 1)
         BCELoss = self.BCEloss(output_fc, labels_query_onehot.float())

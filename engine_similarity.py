@@ -21,7 +21,7 @@ def train_one_epoch(model, data_loader, device, record, epoch, optimizer, criter
 
         optimizer.zero_grad()
         out, att_loss = model(total_input)
-        loss, acc = criterion(out, labels_support, labels_query, att_loss, "train")
+        loss, acc = criterion(out, labels_support, labels_query, att_loss, "train", model.classifier)
         loss.backward()
         optimizer.step()
 
@@ -52,7 +52,7 @@ def evaluate(model, data_loader, device, record, epoch, criterion):
         labels_support = sample_batch["support"]["label"].to(device, dtype=torch.int64)
         total_input = torch.cat([inputs_support, inputs_query], dim=0)
         out, att_loss = model(total_input)
-        loss, acc = criterion(out, labels_support, labels_query, att_loss, "val")
+        loss, acc = criterion(out, labels_support, labels_query, att_loss, "val", model.classifier)
         a = loss.item()
         running_loss += a
         running_att_loss += att_loss.item()
