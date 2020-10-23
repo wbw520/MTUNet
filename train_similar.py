@@ -17,7 +17,7 @@ from loaders.base_loader import make_loaders
 def main(args):
     device = torch.device(args.device)
     loaders = make_loaders(args)
-    criterien = SimilarityLoss(args)
+    criterien = SimilarityLoss(args).to(device)
     model = FSLSimilarity(args)
     model.to(device)
     print_param(model)
@@ -40,7 +40,7 @@ def main(args):
         lr_scheduler.step()
 
         if args.output_dir:
-            checkpoint_paths = [output_dir / ("similarity_checkpoint_ab0_att" + str(epoch) + ".pth")]
+            checkpoint_paths = [output_dir / ("similarity_checkpoint_ab10_5xiao_att" + str(epoch) + ".pth")]
             # if record["val"]["accm"][epoch-1] > max_acc1:
             #     print("get higher acc save current model")
             #     max_acc1 = record["val"]["accm"][epoch-1]
