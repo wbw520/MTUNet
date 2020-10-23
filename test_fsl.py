@@ -58,7 +58,7 @@ def apply_colormap_on_image(org_im, activation, colormap_name):
 
 def main():
     model = FSLSimilarity(args)
-    model_name = "similarity_checkpoint_ab10xiao_att0.pth"
+    model_name = "similarity_checkpoint_ab10_5xiao_att0.pth"
     checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
     model.load_state_dict(checkpoint["model"])
     model.to(device)
@@ -95,5 +95,5 @@ if __name__ == '__main__':
     args.query = 1
     args.vis = True
     device = torch.device(args.device)
-    criterion = SimilarityLoss(args)
+    criterion = SimilarityLoss(args).to(device)
     main()
