@@ -45,7 +45,7 @@ def main(args):
         lr_scheduler.step()
 
         if args.output_dir:
-            checkpoint_paths = [output_dir / ("similarity_checkpoint_ab_lambda0_fc_att" + str(epoch) + ".pth")]
+            checkpoint_paths = [output_dir / ("similarity_checkpoint_250_3_full_fixed" + str(epoch) + ".pth")]
             # if record["val"]["accm"][epoch-1] > max_acc1:
             #     print("get higher acc save current model")
             #     max_acc1 = record["val"]["accm"][epoch-1]

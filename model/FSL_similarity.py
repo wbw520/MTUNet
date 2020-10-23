@@ -31,13 +31,13 @@ class FSLSimilarity(nn.Module):
         self.position_emb = build_position_encoding('sine', hidden_dim=args.hidden_dim)
         self.lambda_value = float(args.lambda_value)
         self.classifier = nn.Sequential(
-                                        # nn.LayerNorm(args.hidden_dim*args.num_slot*2),
+                                        nn.LayerNorm(args.hidden_dim*args.num_slot*2),
                                         nn.Dropout(0.1),
                                         nn.Linear(args.hidden_dim*args.num_slot*2, 2048),
                                         nn.ReLU(),
                                         # nn.Linear(args.n_way*args.n_way*args.hidden_dim+args.n_way*args.hidden_dim, 2048),
-                                        # nn.Linear(2048, 2048),
-                                        # nn.ReLU(),
+                                        nn.Linear(2048, 2048),
+                                        nn.ReLU(),
                                         nn.Linear(2048, 1),
                                         # nn.Linear(1024, args.n_way),
                                         nn.Sigmoid(),
@@ -133,9 +133,9 @@ class SimilarityLoss(nn.Module):
         BCELoss = self.BCEloss(output_fc, labels_query_onehot.float())
         loss = BCELoss + float(self.args.lambda_value) * att_loss
         logits = F.log_softmax(output_fc, dim=-1)
-        logits = logits.reshape(b, self.args.query, self.args.n_way, -1)
-        labels_query = labels_query.reshape(b, self.args.query, self.args.n_way, -1)
+        # logits = logits.reshape(b, self.args.query, self.args.n_way, -1)
+        # labels_query = labels_query.reshape(b, self.args.query, self.args.n_way, -1)
         # loss = -logits.gather(3, labels_query).squeeze().view(-1).mean() + float(self.args.lambda_value) * att_loss
-        _, y_hat = logits.max(3)
-        acc = torch.eq(y_hat, labels_query.squeeze()).float().mean()
+        _, y_hat = logits.max(2)
+        acc = torch.eq(y_hat, labels_query).float().mean()
         return loss, acc
