@@ -32,7 +32,7 @@ def get_args_parser():
     parser.add_argument('--lr_drop', default=30, type=int)
     parser.add_argument('--batch_size', default=2, type=int)
     parser.add_argument('--weight_decay', default=0.0001, type=float)
-    parser.add_argument('--epochs', default=80, type=int)
+    parser.add_argument('--epochs', default=300, type=int)
     parser.add_argument('--img_size', default=80, help='path for save data')
     parser.add_argument('--aug', default=True, help='whether use augmentation')
     parser.add_argument('--use_slot', default=True, type=bool, help='whether use slot module')
