@@ -31,12 +31,12 @@ class FSLSimilarity(nn.Module):
         self.position_emb = build_position_encoding('sine', hidden_dim=args.hidden_dim)
         self.lambda_value = float(args.lambda_value)
         self.classifier = nn.Sequential(
-                                        nn.Linear(args.hidden_dim*args.n_way*2, 1024),
+                                        nn.Linear(args.hidden_dim*args.num_slot*2, 2048),
                                         nn.ReLU(),
                                         # nn.Linear(args.n_way*args.n_way*args.hidden_dim+args.n_way*args.hidden_dim, 2048),
-                                        nn.Linear(1024, 1024),
+                                        nn.Linear(2048, 2048),
                                         nn.ReLU(),
-                                        nn.Linear(1024, 1),
+                                        nn.Linear(2048, 1),
                                         # nn.Linear(1024, args.n_way),
                                         nn.Sigmoid(),
         )
@@ -111,16 +111,16 @@ class SimilarityLoss(nn.Module):
         out_query = out_f[b*self.args.n_way*self.args.n_shot:, :, :]
         out_support = torch.mean(out_support.reshape(b, self.args.n_way, self.args.n_shot, self.args.num_slot, -1), dim=2, keepdim=True)
         out_query = out_query.reshape(b, self.args.n_way, self.args.query, self.args.num_slot, -1)
-        max_s = self.max_select(out_support.mean(-1).squeeze(2))
+        # max_s = self.max_select(out_support.mean(-1).squeeze(2))
         # print(max_s)
-        out_support = self.get_slots(out_support, max_s.reshape(b, 1, 1, -1, 1).expand(b, self.args.n_way, self.args.n_shot, -1, self.args.hidden_dim)).reshape(b, self.args.n_way, self.args.n_way, -1)
-        out_query = self.get_slots(out_query, max_s.reshape(b, 1, 1, -1, 1).expand(b, self.args.n_way, self.args.query, -1, self.args.hidden_dim)).reshape(b, self.args.n_way*self.args.query, self.args.n_way, -1)
+        # out_support = self.get_slots(out_support, max_s.reshape(b, 1, 1, -1, 1).expand(b, self.args.n_way, self.args.n_shot, -1, self.args.hidden_dim)).reshape(b, self.args.n_way, self.args.n_way, -1)
+        # out_query = self.get_slots(out_query, max_s.reshape(b, 1, 1, -1, 1).expand(b, self.args.n_way, self.args.query, -1, self.args.hidden_dim)).reshape(b, self.args.n_way*self.args.query, self.args.n_way, -1)
         # difference = self.get_metric('euclidean')(F.normalize(out_support, dim=-1), F.normalize(out_query, dim=-1))
         # print(difference.reshape((b, out_query.size(1), -1)).shape)
         # logits = F.log_softmax(-difference, dim=2)
         input_fc = torch.cat(
-            [out_support.reshape((b, self.args.n_way, -1)).unsqueeze(1).expand(-1, self.args.n_way*self.args.query, -1, -1),
-            out_query.reshape((b, self.args.n_way*self.args.query, -1)).expand(self.args.n_way,-1,-1,-1).transpose(0,2).transpose(0,1)],
+            [out_support.squeeze(2).reshape((b, self.args.n_way, -1)).unsqueeze(1).expand(-1, self.args.n_way*self.args.query, -1, -1),
+            out_query.reshape((b, self.args.n_way*self.args.query, 1, self.args.num_slot, -1)).squeeze(2).reshape((b, self.args.n_way*self.args.query, -1)).expand(self.args.n_way,-1,-1,-1).transpose(0,2).transpose(0,1)],
             dim = -1
         )
         # input_fc = difference#.reshape((b, out_query.size(1), -1))
