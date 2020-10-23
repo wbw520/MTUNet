@@ -40,7 +40,7 @@ def get_args_parser():
     parser.add_argument('--similar', default=True, type=bool, help='whether use similar model')
 
     # slot setting
-    parser.add_argument('--num_slot', default=20, type=int, help='number of slot')
+    parser.add_argument('--num_slot', default=7, type=int, help='number of slot')
     parser.add_argument('--use_pre', default=True, type=bool, help='whether use pre parameter for backbone')
     parser.add_argument('--loss_status', default=1, type=int, help='positive or negative loss')
     parser.add_argument('--hidden_dim', default=64, type=int, help='dimension of to_k')

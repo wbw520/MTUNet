@@ -18,14 +18,15 @@ class FSLSimilarity(nn.Module):
     def __init__(self, args):
         super(FSLSimilarity, self).__init__()
         self.args = args
-        self.extractor = load_base(args)
-        fix_parameter(self.extractor, [""], mode="fix")
+        self.backbone = load_base(args)
+        fix_parameter(self.backbone, [""], mode="fix")
         # fix_parameter(self.extractor, ["layer4", "layer3"], mode="open")
         self.channel = args.channel
         self.slots_per_class = args.slots_per_class
         self.conv1x1 = nn.Conv2d(self.channel, args.hidden_dim, kernel_size=(1, 1), stride=(1, 1))
         self.slot = ScouterAttention(args, args.n_way, self.slots_per_class, args.hidden_dim, vis=args.vis,
                                      vis_id=args.vis_id, loss_status=args.loss_status, power=args.power, to_k_layer=args.to_k_layer)
+        fix_parameter(self.slot, [""], mode="fix")
         self.position_emb = build_position_encoding('sine', hidden_dim=args.hidden_dim)
         self.lambda_value = float(args.lambda_value)
 
@@ -36,7 +37,7 @@ class FSLSimilarity(nn.Module):
         return x, attn_loss
         
     def feature_deal(self, x):
-        x = self.extractor(x)
+        x = self.backbone(x)
         x = self.conv1x1(x)
         pe = self.position_emb(x)
         x_pe = x + pe
@@ -93,8 +94,8 @@ class SimilarityLoss(nn.Module):
             # print(indices_slot)
             for j in range(cls):
                 ss = 0
-                while not (indices_slot[j][ss] not in temp_index):
-                    ss += 1
+                # while not (indices_slot[j][ss] not in temp_index):
+                #     ss += 1
                 temp_index.append(indices_slot[j][ss])
                 index_list.append(indices_slot[j][ss].unsqueeze(0))
         return torch.cat(index_list, dim=0)

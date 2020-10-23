@@ -59,7 +59,14 @@ class FSLLoader(Dataset):
         return self.n_episodes
 
     def get_fsl_split(self):
-        return torch.randperm(self.n_classes)[:self.n_way]
+        split = torch.randperm(self.n_classes)[:self.n_way]
+        if self.mode == 'train':
+            while 0 in split or 10 in split or 20 in split or 30 in split or 40 in split or 50 in split or 60 in split:
+                split = torch.randperm(self.n_classes)[:self.n_way]
+            return split
+        else:
+            return split
+        
 
     def get_fsl_imgs(self, split):
         img_support = []
