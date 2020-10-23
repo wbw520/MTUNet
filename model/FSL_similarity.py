@@ -34,11 +34,12 @@ class FSLSimilarity(nn.Module):
                                         nn.Linear(args.hidden_dim*args.num_slot*2, 2048),
                                         nn.ReLU(),
                                         # nn.Linear(args.n_way*args.n_way*args.hidden_dim+args.n_way*args.hidden_dim, 2048),
-                                        nn.Linear(2048, 2048),
-                                        nn.ReLU(),
+                                        # nn.Linear(2048, 2048),
+                                        # nn.ReLU(),
                                         nn.Linear(2048, 1),
                                         # nn.Linear(1024, args.n_way),
                                         nn.Sigmoid(),
+                                        #nn.Dropout(0.1)
         )
 
 
