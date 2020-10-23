@@ -20,7 +20,7 @@ class FSLSimilarity(nn.Module):
         self.args = args
         self.extractor = load_base(args)
         fix_parameter(self.extractor, [""], mode="fix")
-        fix_parameter(self.extractor, ["layer4", "layer3"], mode="open")
+        # fix_parameter(self.extractor, ["layer4", "layer3"], mode="open")
         self.channel = args.channel
         self.slots_per_class = args.slots_per_class
         self.conv1x1 = nn.Conv2d(self.channel, args.hidden_dim, kernel_size=(1, 1), stride=(1, 1))
@@ -28,10 +28,13 @@ class FSLSimilarity(nn.Module):
                                      vis_id=args.vis_id, loss_status=args.loss_status, power=args.power, to_k_layer=args.to_k_layer)
         self.position_emb = build_position_encoding('sine', hidden_dim=args.hidden_dim)
         self.lambda_value = float(args.lambda_value)
+
+
     def forward(self, x):
         x_pe, x = self.feature_deal(x)
         x, attn_loss = self.slot(x_pe, x)
         return x, attn_loss
+        
     def feature_deal(self, x):
         x = self.extractor(x)
         x = self.conv1x1(x)
@@ -55,12 +58,25 @@ def euclidean(support, query):
     for i in range(support_size[0]):
         for j in range(support_size[1]):
             support_new[i,j,0] = support[i,j,j]
-    return torch.sum((query[:, :, :, None, :] - support_new[:, None, :, :, :]) ** 2, dim=(3, 4))
+    return (query[:, :, :, None, :] - support_new[:, None, :, :, :]).squeeze(-2)
+    # return torch.sum((query[:, :, :, None, :] - support_new[:, None, :, :, :]) ** 2, dim=(3, 4))
 
 class SimilarityLoss(nn.Module):
     def __init__(self, args):
         super(SimilarityLoss, self).__init__()
         self.args = args
+        self.classifier = nn.Sequential(
+                                        nn.Linear(args.hidden_dim, 1024),
+                                        nn.ReLU(),
+                                        # nn.Linear(args.n_way*args.n_way*args.hidden_dim+args.n_way*args.hidden_dim, 2048),
+                                        nn.Linear(1024, 1024),
+                                        nn.ReLU(),
+                                        nn.Linear(1024, 1),
+                                        # nn.Linear(1024, args.n_way),
+                                        nn.Sigmoid(),
+        )
+        self.BCEloss = nn.BCELoss()
+
     def get_metric(self, metric_type):
         METRICS = {
             'euclidean': euclidean,
@@ -97,10 +113,19 @@ class SimilarityLoss(nn.Module):
         out_support = self.get_slots(out_support, max_s.reshape(b, 1, 1, -1, 1).expand(b, self.args.n_way, self.args.n_shot, -1, self.args.hidden_dim)).reshape(b, self.args.n_way, self.args.n_way, -1)
         out_query = self.get_slots(out_query, max_s.reshape(b, 1, 1, -1, 1).expand(b, self.args.n_way, self.args.query, -1, self.args.hidden_dim)).reshape(b, self.args.n_way*self.args.query, self.args.n_way, -1)
         difference = self.get_metric('euclidean')(F.normalize(out_support, dim=-1), F.normalize(out_query, dim=-1))
-        logits = F.log_softmax(-difference, dim=2)
+        # print(difference.reshape((b, out_query.size(1), -1)).shape)
+        # logits = F.log_softmax(-difference, dim=2)
+        input_fc = difference#.reshape((b, out_query.size(1), -1))
+        # input_fc = torch.cat([out_support.reshape((b, -1)).unsqueeze(1).transpose(1,0).expand((out_query.size(1), b, -1)).transpose(1,0), out_query.reshape((b,out_query.size(1), -1))], dim=-1).reshape(b*out_query.size(1),-1)
+        output_fc = self.classifier(input_fc).squeeze(-1)
+        labels_query_onehot = torch.zeros(labels_query.size()+(5,), dtype=labels_query.dtype).to(labels_query.device)
+        labels_query_onehot.scatter_(-1, labels_query.unsqueeze(-1), 1)
+        BCELoss = self.BCEloss(output_fc, labels_query_onehot.float())
+        loss = BCELoss + float(self.args.lambda_value) * att_loss
+        logits = F.log_softmax(output_fc, dim=-1)
         logits = logits.reshape(b, self.args.query, self.args.n_way, -1)
         labels_query = labels_query.reshape(b, self.args.query, self.args.n_way, -1)
-        loss = -logits.gather(3, labels_query).squeeze().view(-1).mean() + float(self.args.lambda_value) * att_loss
+        # loss = -logits.gather(3, labels_query).squeeze().view(-1).mean() + float(self.args.lambda_value) * att_loss
         _, y_hat = logits.max(3)
         acc = torch.eq(y_hat, labels_query.squeeze()).float().mean()
         return loss, acc

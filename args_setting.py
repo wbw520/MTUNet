@@ -28,7 +28,7 @@ def get_args_parser():
 
     # train setting
     parser.add_argument('--fsl', default=True, type=bool, help='whether train backbone')
-    parser.add_argument('--lr', default=0.0001, type=float)
+    parser.add_argument('--lr', default=0.001, type=float)
     parser.add_argument('--lr_drop', default=30, type=int)
     parser.add_argument('--batch_size', default=2, type=int)
     parser.add_argument('--weight_decay', default=0.0001, type=float)
@@ -47,7 +47,7 @@ def get_args_parser():
     parser.add_argument('--slots_per_class', default=1, type=int, help='number of slot for each class')
     parser.add_argument('--power', default=2, type=float, help='power of the slot loss')
     parser.add_argument('--to_k_layer', default=3, type=int, help='number of layers in to_k')
-    parser.add_argument('--lambda_value', default="1", type=str, help='lambda  of slot loss')
+    parser.add_argument('--lambda_value', default="0", type=str, help='lambda  of slot loss')
     parser.add_argument('--vis', default=False, type=bool, help='whether save slot visualization')
     parser.add_argument('--vis_id', default=0, type=int, help='choose image to visualization')
 
