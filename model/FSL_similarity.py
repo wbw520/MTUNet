@@ -31,9 +31,9 @@ class FSLSimilarity(nn.Module):
         self.position_emb = build_position_encoding('sine', hidden_dim=args.hidden_dim)
         self.lambda_value = float(args.lambda_value)
         self.classifier = nn.Sequential(
-                                        nn.LayerNorm(args.hidden_dim*args.num_slot*2),
+                                        nn.LayerNorm(args.hidden_dim*args.num_slot*2+512*2),
                                         nn.Dropout(0.1),
-                                        nn.Linear(args.hidden_dim*args.num_slot*2, 2048),
+                                        nn.Linear(args.hidden_dim*args.num_slot*2+512*2, 2048),
                                         nn.ReLU(),
                                         # nn.Linear(args.n_way*args.n_way*args.hidden_dim+args.n_way*args.hidden_dim, 2048),
                                         nn.Linear(2048, 2048),
@@ -45,19 +45,19 @@ class FSLSimilarity(nn.Module):
 
 
     def forward(self, x):
-        x_pe, x = self.feature_deal(x)
+        x_pe, x, x_raw = self.feature_deal(x)
         x, attn_loss = self.slot(x_pe, x)
-        return x, attn_loss
+        return x, attn_loss, x_raw
         
     def feature_deal(self, x):
-        x = self.backbone(x)
-        x = self.conv1x1(x)
+        x_raw = self.backbone(x)
+        x = self.conv1x1(x_raw)
         pe = self.position_emb(x)
         x_pe = x + pe
         b, n, r, c = x.shape
         x = x.reshape((b, n, -1)).permute((0, 2, 1))
         x_pe = x_pe.reshape((b, n, -1)).permute((0, 2, 1))
-        return x_pe, x
+        return x_pe, x, x_raw
 
 # def get_gausi(self, slots, size):
 #     gau = torch.randn(size, requires_grad=False)
@@ -79,7 +79,7 @@ class SimilarityLoss(nn.Module):
     def __init__(self, args):
         super(SimilarityLoss, self).__init__()
         self.args = args
-        
+        self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.BCEloss = nn.BCELoss()
 
     def get_metric(self, metric_type):
@@ -105,7 +105,7 @@ class SimilarityLoss(nn.Module):
         return torch.cat(index_list, dim=0)
     def get_slots(self, input, max):
         return torch.gather(input, 3, max)
-    def forward(self, out_f, labels_support, labels_query, att_loss, mode, classifier):
+    def forward(self, out_f, labels_support, labels_query, att_loss, mode, classifier, x_raw):
         b = labels_query.size()[0]
         # att_loss_support = att_loss[:self.args.n_way*self.args.n_shot]
         # att_loss_query = att_loss[self.args.n_way*self.args.n_shot:]
@@ -120,9 +120,14 @@ class SimilarityLoss(nn.Module):
         # difference = self.get_metric('euclidean')(F.normalize(out_support, dim=-1), F.normalize(out_query, dim=-1))
         # print(difference.reshape((b, out_query.size(1), -1)).shape)
         # logits = F.log_softmax(-difference, dim=2)
+        x_raw = self.avg_pool(x_raw)
+        x_raw_support = x_raw[:b*self.args.n_way*self.args.n_shot]
+        x_raw_query = x_raw[b*self.args.n_way*self.args.n_shot:]
         input_fc = torch.cat(
             [out_support.squeeze(2).reshape((b, self.args.n_way, -1)).unsqueeze(1).expand(-1, self.args.n_way*self.args.query, -1, -1),
-            out_query.reshape((b, self.args.n_way*self.args.query, 1, self.args.num_slot, -1)).squeeze(2).reshape((b, self.args.n_way*self.args.query, -1)).expand(self.args.n_way,-1,-1,-1).transpose(0,2).transpose(0,1)],
+            out_query.reshape((b, self.args.n_way*self.args.query, 1, self.args.num_slot, -1)).squeeze(2).reshape((b, self.args.n_way*self.args.query, -1)).unsqueeze(-2).expand(-1,-1,self.args.n_way,-1),
+            x_raw_support.reshape(b, self.args.n_way, 512).unsqueeze(1).expand((-1, self.args.n_way*self.args.query,-1,-1)),
+            x_raw_query.reshape(b, self.args.n_way*self.args.query, 512).unsqueeze(-2).expand((-1, -1, self.args.n_way,-1))],
             dim = -1
         )
         # input_fc = difference#.reshape((b, out_query.size(1), -1))
