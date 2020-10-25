@@ -16,7 +16,7 @@ os.makedirs('vis/query', exist_ok=True)
 
 def test(args, model, img, image, record_name):
     image = image.to(device, dtype=torch.float32)
-    output, att = model(image)
+    output, att, x_raw = model(image)
 
     #For vis
     image_raw = img
@@ -31,7 +31,7 @@ def test(args, model, img, image, record_name):
         heatmap_only, heatmap_on_image = apply_colormap_on_image(image_raw, slot_image, 'jet')
         heatmap_on_image.save("vis/" + record_name + f'slot_mask_{id}.png')
 
-    return output
+    return output, x_raw
 
 def apply_colormap_on_image(org_im, activation, colormap_name):
     """
@@ -58,7 +58,7 @@ def apply_colormap_on_image(org_im, activation, colormap_name):
 
 def main():
     model = FSLSimilarity(args)
-    model_name = "similarity_checkpoint_ab_lambda0_fc_att0.pth"
+    model_name = "similarity_checkpoint_250_3_full_fixed_(0.5drop_three)_scouter1_with_raw_slot27.pth"
     checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
     model.load_state_dict(checkpoint["model"])
     model.to(device)
@@ -73,20 +73,26 @@ def main():
     cls = data["selected_cls"][0]
     print(cls)
     total_out = []
+    total_out_x_raw = []
     for i in range(len(inputs_support)):
-        total_out.append(iters(support_name[i], model, torch.unsqueeze(inputs_support[i], dim=0), "support/pic_" + str(cls[i].item()) + "_"))
+        output = iters(support_name[i], model, torch.unsqueeze(inputs_support[i], dim=0), "support/pic_" + str(cls[i].item()) + "_")
+        total_out.append(output[0])
+        total_out_x_raw.append(output[1])
     print("------------")
     for j in range(len(inputs_query)):
-        total_out.append(iters(query_name[j], model, torch.unsqueeze(inputs_query[j], dim=0), "query/pic_" + str(cls[j].item()) + "_"))
+        output = iters(query_name[j], model, torch.unsqueeze(inputs_query[j], dim=0), "query/pic_" + str(cls[j].item()) + "_")
+        total_out.append(output[0])
+        total_out_x_raw.append(output[1])
     pp = torch.cat(total_out, dim=0)
+    x_raw = torch.cat(total_out_x_raw, dim=0)
     # print(labels_query.size())
-    loss, acc = criterion(pp, 0, labels_query, 0, "val", model.classifier)
+    loss, acc = criterion(pp, 0, labels_query, 0, "val", model.classifier, x_raw)
     # print(pp.size())
 
 def iters(name, model, image, record_name):
     image_orl = Image.open(name[0])
-    out = test(args, model, image_orl, image, record_name)
-    return out
+    out, x_raw = test(args, model, image_orl, image, record_name)
+    return out, x_raw
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('model test script', parents=[get_args_parser()])
