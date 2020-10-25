@@ -20,7 +20,7 @@ def main(args):
     criterien = SimilarityLoss(args).to(device)
     model = FSLSimilarity(args)
 
-    model_name = "scouter_checkpoint1.pth"
+    model_name = "similarity_checkpoint_250_3_full_fixed_with_raw(0.5drop_three).pth"
     model.to(device)
     checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
     model.load_state_dict(checkpoint["model"], strict=False)
