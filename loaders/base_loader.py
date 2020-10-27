@@ -109,11 +109,21 @@ class FSLLoader(Dataset):
         return {"selected_cls": selected_cls, "support": mini_batch_support, "query": mini_batch_query}
 
 
+def get_li(data, cls, index):
+    new_data = []
+    new_cls = []
+    for i in index:
+        new_data.extend(data[i*600: (i+1)*600])
+        new_cls.append(cls[i])
+    return new_data, new_cls
+
+
 def make_loaders(args):
     if not args.fsl:
         all_data = Data(args).get_record()
         train_data = all_data["train"][0]
         cls = list(all_data["train"][1].keys())
+        # train_data, cls = get_li(train_data, cls, [0, 10, 20, 30, 40, 50, 60])
         dataset_train = ImageLoader(args, train_data, cls, "train", transform=make_transform(args, "train"))
         dataset_val = ImageLoader(args, train_data, cls, "val", transform=make_transform(args, "val"))
         sampler_train = torch.utils.data.RandomSampler(dataset_train)

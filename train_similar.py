@@ -20,7 +20,7 @@ def main(args):
     criterien = SimilarityLoss(args).to(device)
     model = FSLSimilarity(args)
 
-    model_name = "mini_use_slot_no_fsl_checkpoint.pth"
+    model_name = "7_mini_use_slot_no_fsl_checkpoint.pth"
     model.to(device)
     checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
     model.load_state_dict(checkpoint["model"], strict=False)
@@ -29,8 +29,8 @@ def main(args):
     params = [p for p in model.parameters() if p.requires_grad]
 
     output_dir = Path(args.output_dir)
-    # optimizer = torch.optim.AdamW(params, lr=args.lr)
-    optimizer = AdaBelief(params, lr=args.lr)
+    optimizer = torch.optim.AdamW(params, lr=args.lr)
+    # optimizer = AdaBelief(params, lr=args.lr)
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.lr_drop)
 
     print("Start training")

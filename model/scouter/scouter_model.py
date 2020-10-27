@@ -10,14 +10,14 @@ class SlotModel(nn.Module):
     def __init__(self, args):
         super(SlotModel, self).__init__()
         self.use_slot = args.use_slot
-        self.backbone = load_backbone(args, drop=True)
+        self.backbone = load_backbone(args, drop=False)
         if self.use_slot:
             self.channel = args.channel
             self.slots_per_class = args.slots_per_class
             self.conv1x1 = nn.Conv2d(self.channel, args.hidden_dim, kernel_size=(1, 1), stride=(1, 1))
             if args.fix_parameter:
                 fix_parameter(self.backbone, [""], mode="fix")
-                fix_parameter(self.backbone, ["layer4", "layer3"], mode="open")
+                # fix_parameter(self.backbone, ["layer4", "layer3"], mode="open")
             self.slot = ScouterAttention(args, args.num_classes, self.slots_per_class, args.hidden_dim, vis=args.vis,
                     vis_id=args.vis_id, loss_status=args.loss_status, power=args.power, to_k_layer=args.to_k_layer)
             self.position_emb = build_position_encoding('sine', hidden_dim=args.hidden_dim)

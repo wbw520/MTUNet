@@ -9,8 +9,8 @@ import torch.nn.functional as F
 
 def load_base(args):
     bone = base_bone.__dict__[args.base_model](num_classes=args.num_classes, drop_dim=False, extract=False)
-    checkpoint = torch.load(f"{args.output_dir}/" + "simple_few_checkpoint.pth", map_location=args.device)
-    bone.load_state_dict(checkpoint["model"])
+    # checkpoint = torch.load(f"{args.output_dir}/" + "simple_few_checkpoint.pth", map_location=args.device)
+    # bone.load_state_dict(checkpoint["model"])
     bone.avg_pool = Identical()
     bone.linear = Identical()
     return bone
@@ -34,9 +34,9 @@ class FSLSimilarity(nn.Module):
         self.lambda_value = float(args.lambda_value)
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.classifier = nn.Sequential(
-                                        nn.LayerNorm(args.hidden_dim*args.num_slot*2),
+                                        nn.LayerNorm(1024),
                                         nn.Dropout(0.5),
-                                        nn.Linear(args.hidden_dim*args.num_slot*2, 2048),
+                                        nn.Linear(1024, 2048),
                                         nn.ReLU(),
                                         nn.Dropout(0.5),
                                         nn.Linear(2048, 2048),
@@ -45,34 +45,35 @@ class FSLSimilarity(nn.Module):
                                         nn.Linear(2048, 1),
                                         nn.Sigmoid(),
         )
-        self.att_query = nn.Sequential(nn.Linear(128, 128),
-                                       nn.ReLU(),
-                                       nn.Linear(128, 128),
-                                       nn.ReLU(),
-                                       nn.Linear(128, 1))
+        # self.att_query = nn.Sequential(nn.Linear(128, 128),
+        #                                nn.ReLU(),
+        #                                nn.Linear(128, 128),
+        #                                nn.ReLU(),
+        #                                nn.Linear(128, 1))
 
     def forward(self, x):
         b = self.args.batch_size
         x_pe, x, x_raw = self.feature_deal(x)
         x, attn_loss, attn = self.slot(x_pe, x)
-        out_support = x[:b*self.args.n_way*self.args.n_shot, :, :]
-        out_query = x[b*self.args.n_way*self.args.n_shot:, :, :]
-        out_support = torch.mean(out_support.reshape(b, self.args.n_way, self.args.n_shot, self.args.num_slot, -1), dim=2, keepdim=True)
-
-        x_raw = self.avg_pool(x_raw)
+        # out_support = x[:b*self.args.n_way*self.args.n_shot, :, :]
+        # out_query = x[b*self.args.n_way*self.args.n_shot:, :, :]
+        attn_support = attn[:b*self.args.n_way*self.args.n_shot, :, :]
+        attn_query = attn[b*self.args.n_way*self.args.n_shot:, :, :]
         x_raw_support = x_raw[:b*self.args.n_way*self.args.n_shot]
         x_raw_query = x_raw[b*self.args.n_way*self.args.n_shot:]
-        out_support = out_support.squeeze(2).reshape((b, self.args.n_way, self.args.num_slot, -1)).unsqueeze(1).expand(-1, self.args.n_way*self.args.query, -1, -1, -1)
-        out_query = out_query.reshape((b, self.args.n_way*self.args.query, self.args.num_slot, -1)).unsqueeze(2).expand(-1, -1, self.args.n_way, -1, -1)
+        size = x_raw_support.size()[-1]
+        dim = x_raw_support.size()[1]
 
-        input_fc = torch.cat([out_support, out_query], dim=-1)
-        input_fc_att = F.softmax(self.att_query(input_fc), dim=-2)
-        print(input_fc_att[0][0][0])
-        input_fc = (input_fc_att*input_fc).reshape(b, self.args.n_way*self.args.query, self.args.n_way, -1)
-        # att_s = F.softmax(self.att_support(out_support), dim=-2)
-        # out_support = (att_s*out_support).sum(-2)
-        # att_q = F.softmax(self.att_query(out_query), dim=-2)
-        # out_query = (att_q*out_query).sum(-2)
+        attn_support = attn_support.mean(1, keepdim=True).reshape(b, self.args.n_way, 1, size, size)
+        attn_query = attn_query.mean(1, keepdim=True).reshape(b, self.args.n_way*self.args.query, 1, size, size)
+        weighted_support = torch.mean(attn_support*(x_raw_support.reshape(b, self.args.n_way, dim, size, size)), dim=(3, 4))
+        weighted_query = torch.mean(attn_query*(x_raw_query.reshape(b, self.args.n_way*self.args.query, dim, size, size)), dim=(3, 4))
+
+        input_fc = torch.cat(
+            [weighted_support.unsqueeze(1).expand(-1, self.args.n_way*self.args.query, -1, -1),
+             weighted_query.unsqueeze(2).expand(-1, -1, self.args.n_way, -1)],
+            dim=-1
+        )
 
         out_fc = self.classifier(input_fc).squeeze(-1)
         return out_fc, attn_loss
@@ -103,9 +104,6 @@ class SimilarityLoss(nn.Module):
         BCELoss = self.BCEloss(out_fc, labels_query_onehot.float())
         loss = BCELoss + float(self.args.lambda_value) * att_loss
         logits = F.log_softmax(out_fc, dim=-1)
-        # logits = logits.reshape(b, self.args.query, self.args.n_way, -1)
-        # labels_query = labels_query.reshape(b, self.args.query, self.args.n_way, -1)
-        # loss = -logits.gather(3, labels_query).squeeze().view(-1).mean() + float(self.args.lambda_value) * att_loss
         _, y_hat = logits.max(2)
         acc = torch.eq(y_hat, labels_query).float().mean()
         return loss, acc
