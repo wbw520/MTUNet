@@ -66,7 +66,6 @@ class FSLLoader(Dataset):
             return split
         else:
             return split
-        
 
     def get_fsl_imgs(self, split):
         img_support = []

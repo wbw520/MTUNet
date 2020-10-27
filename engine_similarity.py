@@ -20,8 +20,8 @@ def train_one_epoch(model, data_loader, device, record, epoch, optimizer, criter
         total_input = torch.cat([inputs_support, inputs_query], dim=0)
 
         optimizer.zero_grad()
-        out, att_loss, x_raw = model(total_input)
-        loss, acc = criterion(out, labels_support, labels_query, att_loss, "train", model.classifier, x_raw)
+        out, att_loss = model(total_input)
+        loss, acc = criterion(out, labels_support, labels_query, att_loss, "train")
         loss.backward()
         optimizer.step()
 
@@ -51,8 +51,8 @@ def evaluate(model, data_loader, device, record, epoch, criterion):
         inputs_support = torch.cat(list(sample_batch["support"]["image"].to(device, dtype=torch.float32)), dim=0)
         labels_support = sample_batch["support"]["label"].to(device, dtype=torch.int64)
         total_input = torch.cat([inputs_support, inputs_query], dim=0)
-        out, att_loss, x_raw = model(total_input)
-        loss, acc = criterion(out, labels_support, labels_query, att_loss, "val", model.classifier, x_raw)
+        out, att_loss = model(total_input)
+        loss, acc = criterion(out, labels_support, labels_query, att_loss, "val")
         a = loss.item()
         running_loss += a
         running_att_loss += att_loss.item()

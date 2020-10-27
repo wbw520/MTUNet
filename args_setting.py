@@ -6,7 +6,7 @@ def get_args_parser():
 
     # dataset setting
     parser.add_argument('--dataset', default="mini", type=str)
-    parser.add_argument('--data_root', default="/data/li/mini_imagenet/", type=str)
+    parser.add_argument('--data_root', default="/home/wbw/PAN/mini_imagenet/", type=str)
 
     # model setting
     parser.add_argument('--base_model', default='resnet18', type=str)
@@ -30,9 +30,9 @@ def get_args_parser():
     parser.add_argument('--fsl', default=True, type=bool, help='whether train backbone')
     parser.add_argument('--lr', default=0.001, type=float)
     parser.add_argument('--lr_drop', default=30, type=int)
-    parser.add_argument('--batch_size', default=2, type=int)
+    parser.add_argument('--batch_size', default=256, type=int)
     parser.add_argument('--weight_decay', default=0.0001, type=float)
-    parser.add_argument('--epochs', default=300, type=int)
+    parser.add_argument('--epochs', default=100, type=int)
     parser.add_argument('--img_size', default=80, help='path for save data')
     parser.add_argument('--aug', default=True, help='whether use augmentation')
     parser.add_argument('--use_slot', default=True, type=bool, help='whether use slot module')

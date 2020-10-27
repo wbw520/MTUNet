@@ -11,27 +11,26 @@ import torch
 import os
 
 os.makedirs('vis/', exist_ok=True)
-os.makedirs('vis/support', exist_ok=True)
-os.makedirs('vis/query', exist_ok=True)
+# os.makedirs('vis/support', exist_ok=True)
+# os.makedirs('vis/query', exist_ok=True)
 
-def test(args, model, img, image, record_name):
+
+def test(args, model, image, record_name):
     image = image.to(device, dtype=torch.float32)
-    output, att, x_raw = model(image)
+    b = image.size()[0]
+    output, att = model(image)
 
-    #For vis
-    image_raw = img
-    image_raw.save('vis/image.png')
-    image_raw.save("vis/" + record_name + "image.png")
-    model.train()
+    for i in range(b):
+        image_raw = Image.open(record_name[i][0])
+        image_raw.save('vis/image.png')
+        image_raw.save("vis/" + str(i) + "image.png")
+        for id in range(args.num_slot):
+            image_raw = Image.open('vis/image.png').convert('RGB')
+            slot_image = np.array(Image.open(f'vis/{i}_slot_{id}.png').resize(image_raw.size, resample=Image.BILINEAR), dtype=np.uint8)
 
-    for id in range(args.num_slot):
-        image_raw = Image.open('vis/image.png').convert('RGB')
-        slot_image = np.array(Image.open(f'vis/slot_{id}.png').resize(image_raw.size, resample=Image.BILINEAR), dtype=np.uint8)
+            heatmap_only, heatmap_on_image = apply_colormap_on_image(image_raw, slot_image, 'jet')
+            heatmap_on_image.save("vis/" + f'{i}_slot_mask_{id}.png')
 
-        heatmap_only, heatmap_on_image = apply_colormap_on_image(image_raw, slot_image, 'jet')
-        heatmap_on_image.save("vis/" + record_name + f'slot_mask_{id}.png')
-
-    return output, x_raw
 
 def apply_colormap_on_image(org_im, activation, colormap_name):
     """
@@ -56,9 +55,10 @@ def apply_colormap_on_image(org_im, activation, colormap_name):
     heatmap_on_image = Image.alpha_composite(heatmap_on_image, heatmap)
     return no_trans_heatmap, heatmap_on_image
 
+
 def main():
     model = FSLSimilarity(args)
-    model_name = "similarity_checkpoint_250_3_full_fixed_(0.5drop_three)_scouter1_with_raw_slot27.pth"
+    model_name = "scouter_FSL_noslot24.pth"
     checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
     model.load_state_dict(checkpoint["model"])
     model.to(device)
@@ -72,34 +72,20 @@ def main():
     support_name = data["support"]["name"]
     cls = data["selected_cls"][0]
     print(cls)
-    total_out = []
-    total_out_x_raw = []
-    for i in range(len(inputs_support)):
-        output = iters(support_name[i], model, torch.unsqueeze(inputs_support[i], dim=0), "support/pic_" + str(cls[i].item()) + "_")
-        total_out.append(output[0])
-        total_out_x_raw.append(output[1])
-    print("------------")
-    for j in range(len(inputs_query)):
-        output = iters(query_name[j], model, torch.unsqueeze(inputs_query[j], dim=0), "query/pic_" + str(cls[j].item()) + "_")
-        total_out.append(output[0])
-        total_out_x_raw.append(output[1])
-    pp = torch.cat(total_out, dim=0)
-    x_raw = torch.cat(total_out_x_raw, dim=0)
-    # print(labels_query.size())
-    loss, acc = criterion(pp, 0, labels_query, 0, "val", model.classifier, x_raw)
-    # print(pp.size())
+    total_input = torch.cat([inputs_support, inputs_query], dim=0)
+    record_name = support_name + query_name
+    print(record_name)
+    test(args, model, total_input, record_name)
 
-def iters(name, model, image, record_name):
-    image_orl = Image.open(name[0])
-    out, x_raw = test(args, model, image_orl, image, record_name)
-    return out, x_raw
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('model test script', parents=[get_args_parser()])
     args = parser.parse_args()
     args.batch_size = 1
+    args.num_slot = 7
     args.query = 1
     args.vis = True
+    args.fsl = True
     device = torch.device(args.device)
     criterion = SimilarityLoss(args).to(device)
     main()

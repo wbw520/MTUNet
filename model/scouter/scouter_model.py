@@ -10,7 +10,7 @@ class SlotModel(nn.Module):
     def __init__(self, args):
         super(SlotModel, self).__init__()
         self.use_slot = args.use_slot
-        self.backbone = load_backbone(args, drop=args.drop_dim)
+        self.backbone = load_backbone(args, drop=True)
         if self.use_slot:
             self.channel = args.channel
             self.slots_per_class = args.slots_per_class
