@@ -49,12 +49,13 @@ class FSLSimilarity(nn.Module):
                                         nn.Linear(2048, 1),
                                         nn.Sigmoid(),
         )
-        self.use_affine = True
+        self.use_affine = False
         self.u_vis = False
 
     def forward(self, x):
         b = 1
         x_pe, x, x_raw = self.feature_deal(x)
+        x_raw = torch.relu(x_raw)
         x, attn_loss, attn = self.slot(x_pe, x)
         # out_support = x[:b*self.args.n_way*self.args.n_shot, :, :]
         # out_query = x[b*self.args.n_way*self.args.n_shot:, :, :]
@@ -79,6 +80,8 @@ class FSLSimilarity(nn.Module):
             self.vis(attn_query, "affined_query", self.u_vis)
             attn_query = attn_query.reshape(b, self.args.n_way*self.args.query, 1, size, size)
 
+        attn_support = self.threshold(attn_support)
+        attn_query = self.threshold(attn_query)
         weighted_support = torch.mean(attn_support*(x_raw_support.reshape(b, self.args.n_way, dim, size, size)), dim=(3, 4))
         weighted_query = torch.mean(attn_query*(x_raw_query.reshape(b, self.args.n_way*self.args.query, dim, size, size)), dim=(3, 4))
 
@@ -90,7 +93,12 @@ class FSLSimilarity(nn.Module):
 
         out_fc = self.classifier(input_fc).squeeze(-1)
         return out_fc, attn_loss
-        
+
+    def threshold(self, data):
+        mean_value = data.mean()
+        data[data < mean_value] = 0.
+        return data
+
     def feature_deal(self, x):
         x_raw = self.backbone(x)
         x = self.conv1x1(x_raw)
@@ -113,15 +121,15 @@ class FSLSimilarity(nn.Module):
             image.save(f'vis/affine/{name}_{i}.png')
 
     def affine(self, data):
-        # data = data.permute((0, 2, 3, 1)).cpu().detach().numpy()
-        # seq = iaa.Sequential([iaa.Affine(translate_percent={"x": (-0.6, 0.6), "y": (-0.6, 0.6)}, mode="wrap")])
-        # im = seq(images=np.array(data))
-        # im = torch.from_numpy(im)
-        # im = im.permute((0, 3, 1, 2)).cuda()
-        noise = torch.rand(data.size()).cuda()
-        data = data + noise
-        data[data>1] = data[data>1]-1.
-        return data
+        data = data.permute((0, 2, 3, 1)).cpu().detach().numpy()
+        seq = iaa.Sequential([iaa.Affine(translate_percent={"x": (-0.6, 0.6), "y": (-0.6, 0.6)}, mode="wrap")])
+        im = seq(images=np.array(data))
+        im = torch.from_numpy(im)
+        im = im.permute((0, 3, 1, 2)).cuda()
+        # noise = torch.rand(data.size()).cuda()
+        # data = data + noise
+        # data[data>1] = data[data>1]-1.
+        return im
 
 
 class SimilarityLoss(nn.Module):

@@ -56,7 +56,7 @@ def get_args_parser():
     parser.add_argument('--output_dir', default='saved_model',
                         help='path where to save, empty for no saving')
     parser.add_argument('--start_epoch', default=0, type=int, metavar='N', help='start epoch')
-    parser.add_argument('--num_workers', default=4, type=int)
+    parser.add_argument('--num_workers', default=2, type=int)
 
     # distributed training parameters
     parser.add_argument('--world_size', default=1, type=int,
