@@ -21,15 +21,27 @@ def test(args, model, image, record_name):
     output, att = model(image)
 
     for i in range(b):
-        image_raw = Image.open(record_name[i][0])
+        image_raw = Image.open(record_name[i][0]).convert('RGB').resize((args.img_size, args.img_size), resample=Image.BILINEAR)
         image_raw.save('vis/image.png')
         image_raw.save("vis/" + str(i) + "image.png")
         for id in range(args.num_slot):
-            image_raw = Image.open('vis/image.png').convert('RGB')
-            slot_image = np.array(Image.open(f'vis/{i}_slot_{id}.png').resize(image_raw.size, resample=Image.BILINEAR), dtype=np.uint8)
-
+            slot_image = np.array(Image.open(f'vis/{i}_slot_{id}.png'), dtype=np.uint8)
             heatmap_only, heatmap_on_image = apply_colormap_on_image(image_raw, slot_image, 'jet')
             heatmap_on_image.save("vis/" + f'{i}_slot_mask_{id}.png')
+
+        if i < args.n_shot*args.n_way:
+            affine_name = "support"
+            index = i
+        else:
+            affine_name = "query"
+            index = i - args.n_shot*args.n_way
+        sum_slot = np.array(Image.open(f'vis/affine/affined_{affine_name}_{index}.png'), dtype=np.uint8)
+        heatmap_only, heatmap_on_image = apply_colormap_on_image(image_raw, sum_slot, 'jet')
+        heatmap_on_image.save("vis/affine/" + f'colored_affined_{affine_name}_{index}.png')
+
+        sum_slot = np.array(Image.open(f'vis/affine/origin_{affine_name}_{index}.png'), dtype=np.uint8)
+        heatmap_only, heatmap_on_image = apply_colormap_on_image(image_raw, sum_slot, 'jet')
+        heatmap_on_image.save("vis/affine/" + f'colored_origin_{affine_name}_{index}.png')
 
 
 def apply_colormap_on_image(org_im, activation, colormap_name):
@@ -58,7 +70,7 @@ def apply_colormap_on_image(org_im, activation, colormap_name):
 
 def main():
     model = FSLSimilarity(args)
-    model_name = "scouter_FSL_noslot24.pth"
+    model_name = "scouter_FSL_noslot64_19.pth"
     checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
     model.load_state_dict(checkpoint["model"])
     model.to(device)
@@ -74,7 +86,6 @@ def main():
     print(cls)
     total_input = torch.cat([inputs_support, inputs_query], dim=0)
     record_name = support_name + query_name
-    print(record_name)
     test(args, model, total_input, record_name)
 
 

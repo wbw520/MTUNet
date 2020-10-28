@@ -14,7 +14,11 @@ import torch
 
 @torch.no_grad()
 def evaluate(model, data_loader, device, criterion):
+    model.eval()
+    criterion.eval()
+    print("start test: ")
     running_loss = 0.0
+    running_att_loss = 0.0
     running_acc_95 = []
     L = len(data_loader)
     for i_batch, sample_batch in enumerate(tqdm(data_loader)):
@@ -24,9 +28,10 @@ def evaluate(model, data_loader, device, criterion):
         labels_support = sample_batch["support"]["label"].to(device, dtype=torch.int64)
         total_input = torch.cat([inputs_support, inputs_query], dim=0)
         out, att_loss = model(total_input)
-        loss, acc = criterion(out, labels_support, labels_query, att_loss, "train")
+        loss, acc = criterion(out, labels_support, labels_query, att_loss, "val")
         a = loss.item()
         running_loss += a
+        running_att_loss += att_loss.item()
         running_acc_95.append(round(acc.item(), 4))
 
     print("loss: ", round(running_loss/L, 3))
@@ -37,12 +42,12 @@ def evaluate(model, data_loader, device, criterion):
 def main():
     criterien = SimilarityLoss(args)
     model = FSLSimilarity(args)
-    model_name = "similarity_checkpoint_hehe.pth"
+    model_name = "scouter_FSL_noslot64_6.pth"
     checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
     model.load_state_dict(checkpoint["model"])
     model.to(device)
     model.eval()
-    dataset_test = make_loaders(args)["val"]
+    dataset_test = make_loaders(args)["test"]
     evaluate(model, dataset_test, device, criterien)
 
 

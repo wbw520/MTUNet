@@ -29,8 +29,8 @@ def main(args):
     params = [p for p in model.parameters() if p.requires_grad]
 
     output_dir = Path(args.output_dir)
-    optimizer = torch.optim.AdamW(params, lr=args.lr)
-    # optimizer = AdaBelief(params, lr=args.lr)
+    # optimizer = torch.optim.AdamW(params, lr=args.lr)
+    optimizer = AdaBelief(params, lr=args.lr)
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.lr_drop)
 
     print("Start training")
@@ -45,7 +45,7 @@ def main(args):
         lr_scheduler.step()
 
         if args.output_dir:
-            checkpoint_paths = [output_dir / ("scouter_FSL_noslot64_" + str(epoch) + ".pth")]
+            checkpoint_paths = [output_dir / ("scouter_FSL_affine_" + str(epoch) + ".pth")]
             # if record["val"]["accm"][epoch-1] > max_acc1:
             #     print("get higher acc save current model")
             #     max_acc1 = record["val"]["accm"][epoch-1]

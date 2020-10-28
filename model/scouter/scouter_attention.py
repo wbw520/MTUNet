@@ -67,7 +67,7 @@ class ScouterAttention(nn.Module):
                 slots_vis = ((slots_vis - slots_vis.min()) / (slots_vis.max()-slots_vis.min()) * 255.).reshape(slots_vis.shape[:1]+(int(slots_vis.size(1)**0.5), int(slots_vis.size(1)**0.5)))
                 slots_vis = (slots_vis.cpu().detach().numpy()).astype(np.uint8)
                 for id, image in enumerate(slots_vis):
-                    image = Image.fromarray(image, mode='L')
+                    image = Image.fromarray(image, mode='L').resize((self.args.img_size, self.args.img_size), resample=Image.BILINEAR)
                     image.save(f'vis/{i}_slot_{id:d}.png')
 
         attn_relu = torch.relu(attn)

@@ -14,7 +14,6 @@ def get_args_parser():
     parser.add_argument("--num_classes", default=64, type=int)
 
     # FSL setting
-    parser.add_argument('--n_way_train', default=5, type=int)
     parser.add_argument('--n_way', default=5, type=int)
     parser.add_argument('--n_shot', default=1, type=int)
     parser.add_argument('--query', default=15, type=int)
@@ -29,10 +28,10 @@ def get_args_parser():
     # train setting
     parser.add_argument('--fsl', default=True, type=bool, help='whether train backbone')
     parser.add_argument('--lr', default=0.001, type=float)
-    parser.add_argument('--lr_drop', default=30, type=int)
+    parser.add_argument('--lr_drop', default=10, type=int)
     parser.add_argument('--batch_size', default=2, type=int)
     parser.add_argument('--weight_decay', default=0.0001, type=float)
-    parser.add_argument('--epochs', default=100, type=int)
+    parser.add_argument('--epochs', default=20, type=int)
     parser.add_argument('--img_size', default=80, help='path for save data')
     parser.add_argument('--aug', default=True, help='whether use augmentation')
     parser.add_argument('--use_slot', default=True, type=bool, help='whether use slot module')

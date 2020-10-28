@@ -4,7 +4,10 @@ from model.model_tools import Identical, fix_parameter
 from model.scouter.scouter_attention import ScouterAttention
 from model.scouter.position_encode import build_position_encoding
 import torch.nn as nn
+from PIL import Image
 import torch.nn.functional as F
+import imgaug.augmenters as iaa
+import numpy as np
 
 
 def load_base(args):
@@ -45,11 +48,8 @@ class FSLSimilarity(nn.Module):
                                         nn.Linear(2048, 1),
                                         nn.Sigmoid(),
         )
-        # self.att_query = nn.Sequential(nn.Linear(128, 128),
-        #                                nn.ReLU(),
-        #                                nn.Linear(128, 128),
-        #                                nn.ReLU(),
-        #                                nn.Linear(128, 1))
+        self.use_affine = True
+        self.u_vis = False
 
     def forward(self, x):
         b = self.args.batch_size
@@ -66,6 +66,18 @@ class FSLSimilarity(nn.Module):
 
         attn_support = attn_support.mean(1, keepdim=True).reshape(b, self.args.n_way, 1, size, size)
         attn_query = attn_query.mean(1, keepdim=True).reshape(b, self.args.n_way*self.args.query, 1, size, size)
+        if self.use_affine:
+            attn_support = attn_support.reshape(b*self.args.n_way, 1, size, size)
+            self.vis(attn_support, "origin_support", self.u_vis)
+            attn_support = self.affine(attn_support)
+            self.vis(attn_support, "affined_support", self.u_vis)
+            attn_support = attn_support.reshape(b, self.args.n_way, 1, size, size)
+            attn_query = attn_query.reshape(b*self.args.n_way*self.args.query, 1, size, size)
+            self.vis(attn_query, "origin_query", self.u_vis)
+            attn_query = self.affine(attn_query)
+            self.vis(attn_query, "affined_query", self.u_vis)
+            attn_query = attn_query.reshape(b, self.args.n_way*self.args.query, 1, size, size)
+
         weighted_support = torch.mean(attn_support*(x_raw_support.reshape(b, self.args.n_way, dim, size, size)), dim=(3, 4))
         weighted_query = torch.mean(attn_query*(x_raw_query.reshape(b, self.args.n_way*self.args.query, dim, size, size)), dim=(3, 4))
 
@@ -87,6 +99,25 @@ class FSLSimilarity(nn.Module):
         x = x.reshape((b, n, -1)).permute((0, 2, 1))
         x_pe = x_pe.reshape((b, n, -1)).permute((0, 2, 1))
         return x_pe, x, x_raw
+
+    def vis(self, att_vises, name, use_vis):
+        if not use_vis:
+            return
+        b = att_vises.size(0)
+        for i in range(b):
+            att_vis = att_vises[i]
+            att_vis = ((att_vis - att_vis.min()) / (att_vis.max()-att_vis.min()) * 255.)
+            att_vis = (att_vis.squeeze(0).cpu().detach().numpy()).astype(np.uint8)
+            image = Image.fromarray(att_vis, mode='L').resize((self.args.img_size, self.args.img_size), resample=Image.BILINEAR)
+            image.save(f'vis/affine/{name}_{i}.png')
+
+    def affine(self, data):
+        data = data.permute((0, 2, 3, 1)).cpu().detach().numpy()
+        seq = iaa.Sequential([iaa.Affine(translate_percent={"x": (-0.3, 0.3), "y": (-0.3, 0.3)}, mode="wrap")])
+        im = seq(images=np.array(data))
+        im = torch.from_numpy(im)
+        im = im.permute((0, 3, 1, 2)).cuda()
+        return im
 
 
 class SimilarityLoss(nn.Module):

@@ -134,7 +134,7 @@ def make_loaders(args):
         print("load normal data over")
         return {"train": data_loader_train, "val": data_loader_val}
     else:
-        dataset_train = FSLLoader(args, "train", args.n_way_train, args.train_classes, args.train_episodes)
+        dataset_train = FSLLoader(args, "train", args.n_way, args.train_classes, args.train_episodes)
         dataset_val = FSLLoader(args, "val", args.n_way, args.val_classes, args.val_episodes)
         dataset_test = FSLLoader(args, "test", args.n_way, args.test_classes, args.test_episodes)
         sampler_train = torch.utils.data.RandomSampler(dataset_train)
