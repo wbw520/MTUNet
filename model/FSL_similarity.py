@@ -7,6 +7,7 @@ import torch.nn as nn
 from PIL import Image
 import torch.nn.functional as F
 import imgaug.augmenters as iaa
+from torch.autograd import Variable
 import numpy as np
 
 
@@ -52,7 +53,7 @@ class FSLSimilarity(nn.Module):
         self.u_vis = False
 
     def forward(self, x):
-        b = self.args.batch_size
+        b = 1
         x_pe, x, x_raw = self.feature_deal(x)
         x, attn_loss, attn = self.slot(x_pe, x)
         # out_support = x[:b*self.args.n_way*self.args.n_shot, :, :]
@@ -112,12 +113,15 @@ class FSLSimilarity(nn.Module):
             image.save(f'vis/affine/{name}_{i}.png')
 
     def affine(self, data):
-        data = data.permute((0, 2, 3, 1)).cpu().detach().numpy()
-        seq = iaa.Sequential([iaa.Affine(translate_percent={"x": (-0.3, 0.3), "y": (-0.3, 0.3)}, mode="wrap")])
-        im = seq(images=np.array(data))
-        im = torch.from_numpy(im)
-        im = im.permute((0, 3, 1, 2)).cuda()
-        return im
+        # data = data.permute((0, 2, 3, 1)).cpu().detach().numpy()
+        # seq = iaa.Sequential([iaa.Affine(translate_percent={"x": (-0.6, 0.6), "y": (-0.6, 0.6)}, mode="wrap")])
+        # im = seq(images=np.array(data))
+        # im = torch.from_numpy(im)
+        # im = im.permute((0, 3, 1, 2)).cuda()
+        noise = torch.rand(data.size()).cuda()
+        data = data + noise
+        data[data>1] = data[data>1]-1.
+        return data
 
 
 class SimilarityLoss(nn.Module):
@@ -129,7 +133,8 @@ class SimilarityLoss(nn.Module):
     def get_slots(self, input, max):
         return torch.gather(input, 3, max)
 
-    def forward(self, out_fc, labels_support, labels_query, att_loss, mode):
+    def forward(self, out_fc, att_loss, mode):
+        labels_query = Variable(torch.arange(0, self.args.n_way).view(self.args.n_way, 1).expand(self.args.n_way, self.args.query).long().cuda(), requires_grad=False).reshape(-1)
         labels_query_onehot = torch.zeros(labels_query.size()+(5,), dtype=labels_query.dtype).to(labels_query.device)
         labels_query_onehot.scatter_(-1, labels_query.unsqueeze(-1), 1)
         BCELoss = self.BCEloss(out_fc, labels_query_onehot.float())

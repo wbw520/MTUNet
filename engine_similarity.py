@@ -12,16 +12,11 @@ def train_one_epoch(model, data_loader, device, record, epoch, optimizer, criter
     running_att_loss = 0.0
     running_acc_95 = []
     print("start train: " + str(epoch))
-    for i_batch, sample_batch in enumerate(tqdm(data_loader)):
-        inputs_query = torch.cat(list(sample_batch["query"]["image"].to(device, dtype=torch.float32)), dim=0)
-        labels_query = sample_batch["query"]["label"].to(device, dtype=torch.int64)
-        inputs_support = torch.cat(list(sample_batch["support"]["image"].to(device, dtype=torch.float32)), dim=0)
-        labels_support = sample_batch["support"]["label"].to(device, dtype=torch.int64)
-        total_input = torch.cat([inputs_support, inputs_query], dim=0)
-
+    for i, (inputs, target) in enumerate(tqdm(data_loader)):
+        inputs = inputs.to(device, dtype=torch.float32)
         optimizer.zero_grad()
-        out, att_loss = model(total_input)
-        loss, acc = criterion(out, labels_support, labels_query, att_loss, "train")
+        out, att_loss = model(inputs)
+        loss, acc = criterion(out, att_loss, "train")
         loss.backward()
         optimizer.step()
 
@@ -45,14 +40,11 @@ def evaluate(model, data_loader, device, record, epoch, criterion):
     running_att_loss = 0.0
     running_acc_95 = []
     L = len(data_loader)
-    for i_batch, sample_batch in enumerate(tqdm(data_loader)):
-        inputs_query = torch.cat(list(sample_batch["query"]["image"].to(device, dtype=torch.float32)), dim=0)
-        labels_query = sample_batch["query"]["label"].to(device, dtype=torch.int64)
-        inputs_support = torch.cat(list(sample_batch["support"]["image"].to(device, dtype=torch.float32)), dim=0)
-        labels_support = sample_batch["support"]["label"].to(device, dtype=torch.int64)
-        total_input = torch.cat([inputs_support, inputs_query], dim=0)
-        out, att_loss = model(total_input)
-        loss, acc = criterion(out, labels_support, labels_query, att_loss, "val")
+    for i, (inputs, target) in enumerate(tqdm(data_loader)):
+        inputs = inputs.to(device, dtype=torch.float32)
+
+        out, att_loss = model(inputs)
+        loss, acc = criterion(out, att_loss, "train")
         a = loss.item()
         running_loss += a
         running_att_loss += att_loss.item()

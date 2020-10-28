@@ -11,12 +11,15 @@ from pathlib import Path
 from engine_similarity import train_one_epoch, evaluate
 from tools.calculate_tool import MetricLogSimilar
 from tools.Adabelif import AdaBelief
-from loaders.base_loader import make_loaders
+from loaders.base_loader import get_dataloader
 
 
 def main(args):
     device = torch.device(args.device)
-    loaders = make_loaders(args)
+    sample_info_train = [args.train_episodes, args.n_way, args.n_shot, args.query]
+    loaders_train = get_dataloader(args, "train", sample=sample_info_train)
+    sample_info_val = [args.val_episodes, args.n_way, args.n_shot, args.query]
+    loaders_val = get_dataloader(args, "val", sample=sample_info_val)
     criterien = SimilarityLoss(args).to(device)
     model = FSLSimilarity(args)
 
@@ -40,8 +43,8 @@ def main(args):
 
     max_acc1 = 0
     for epoch in range(args.start_epoch, args.epochs):
-        train_one_epoch(model, loaders["train"], device, record, epoch, optimizer, criterien)
-        evaluate(model, loaders["val"], device, record, epoch, criterien)
+        train_one_epoch(model, loaders_train, device, record, epoch, optimizer, criterien)
+        evaluate(model, loaders_val, device, record, epoch, criterien)
         lr_scheduler.step()
 
         if args.output_dir:
