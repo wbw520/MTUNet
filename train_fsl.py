@@ -46,7 +46,7 @@ def main(args):
         lr_scheduler.step()
 
         if args.output_dir:
-            checkpoint_paths = [output_dir / ("scouter_FSL_affine_" + str(epoch) + ".pth")]
+            checkpoint_paths = [output_dir / ("scouter_FSL_our_" + str(epoch) + ".pth")]
             if record["val"]["accm"][epoch-1] > max_acc1:
                 print("get higher acc save current model")
                 max_acc1 = record["val"]["accm"][epoch-1]
