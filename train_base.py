@@ -56,6 +56,7 @@ def main(args, selection=None):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('model training and evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
+    args.fsl = False
     args.lr_drop = 30
     args.epochs = 80
     args.batch_size = 256
@@ -66,5 +67,6 @@ if __name__ == '__main__':
     args.use_slot = True
     args.drop_dim = False
     args.lr = 0.0001
+    args.slot_num = 10
     main(args, selection=[0, 10, 20, 30, 40, 50, 60, 70, 80, 90])
 

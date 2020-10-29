@@ -1,10 +1,9 @@
 import argparse
-from train import get_args_parser
-from torch.utils.data import DataLoader, Dataset
+from args_setting import *
 import matplotlib.cm as mpl_color_map
 import copy
-from model.FSL_similarity import FSLSimilarity, SimilarityLoss
-from loaders.base_loader import make_loaders
+from model.FSL import FSLSimilarity, SimilarityLoss
+from loaders.base_loader import get_dataloader
 from PIL import Image
 import numpy as np
 import torch
@@ -21,13 +20,12 @@ def test(args, model, image, record_name):
     output, att = model(image)
 
     for i in range(b):
-        image_raw = Image.open(record_name[i][0]).convert('RGB').resize((args.img_size, args.img_size), resample=Image.BILINEAR)
-        image_raw.save('vis/image.png')
-        image_raw.save("vis/" + str(i) + "image.png")
+        image_raw = Image.open(record_name[i]).convert('RGB').resize((args.img_size, args.img_size), resample=Image.BILINEAR)
+        image_raw.save("vis/att/" + str(i) + "image.png")
         for id in range(args.num_slot):
-            slot_image = np.array(Image.open(f'vis/{i}_slot_{id}.png'), dtype=np.uint8)
+            slot_image = np.array(Image.open(f'vis/att/{i}_slot_{id}.png'), dtype=np.uint8)
             heatmap_only, heatmap_on_image = apply_colormap_on_image(image_raw, slot_image, 'jet')
-            heatmap_on_image.save("vis/" + f'{i}_slot_mask_{id}.png')
+            heatmap_on_image.save("vis/att/" + f'{i}_slot_mask_{id}.png')
 
         if i < args.n_shot*args.n_way:
             affine_name = "support"
@@ -75,24 +73,18 @@ def main():
     model.load_state_dict(checkpoint["model"])
     model.to(device)
     model.eval()
-    dataset_val = make_loaders(args)["val"]
+    sample_info_val = [args.val_episodes, args.n_way, args.n_shot, args.query]
+    dataset_val = get_dataloader(args, "val", sample=sample_info_val, out_name=True)
     data = iter(dataset_val).next()
-    inputs_query = data["query"]["image"][0]
-    query_name = data["query"]["name"]
-    labels_query = data["query"]["label"].to(device, dtype=torch.int64)
-    inputs_support = data["support"]["image"][0]
-    support_name = data["support"]["name"]
-    cls = data["selected_cls"][0]
-    print(cls)
-    total_input = torch.cat([inputs_support, inputs_query], dim=0)
-    record_name = support_name + query_name
-    test(args, model, total_input, record_name)
+
+    imgs, labels, img_name = data
+    print(imgs.size())
+    test(args, model, imgs, img_name)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('model test script', parents=[get_args_parser()])
     args = parser.parse_args()
-    args.batch_size = 1
     args.num_slot = 7
     args.query = 1
     args.vis = True

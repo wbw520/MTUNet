@@ -12,9 +12,7 @@ import numpy as np
 
 
 def load_base(args):
-    bone = base_bone.__dict__[args.base_model](num_classes=args.num_classes, drop_dim=False, extract=False)
-    # checkpoint = torch.load(f"{args.output_dir}/" + "simple_few_checkpoint.pth", map_location=args.device)
-    # bone.load_state_dict(checkpoint["model"])
+    bone = base_bone.__dict__[args.base_model](num_classes=args.num_classes, drop_dim=args.drop_dim, extract=False)
     bone.avg_pool = Identical()
     bone.linear = Identical()
     return bone
@@ -30,7 +28,7 @@ class FSLSimilarity(nn.Module):
         self.channel = args.channel
         self.slots_per_class = args.slots_per_class
         self.conv1x1 = nn.Conv2d(self.channel, args.hidden_dim, kernel_size=(1, 1), stride=(1, 1))
-        self.slot = ScouterAttention(args, args.n_way, self.slots_per_class, args.hidden_dim, vis=args.vis,
+        self.slot = ScouterAttention(args, self.slots_per_class, args.hidden_dim, vis=args.vis,
                                      vis_id=args.vis_id, loss_status=args.loss_status, power=args.power, to_k_layer=args.to_k_layer)
         fix_parameter(self.conv1x1, [""], mode="fix")
         fix_parameter(self.slot, [""], mode="fix")
@@ -51,7 +49,7 @@ class FSLSimilarity(nn.Module):
         )
         self.use_affine = True
         self.use_threshold = False
-        self.u_vis = False
+        self.u_vis = True
 
     def forward(self, x):
         b = 1

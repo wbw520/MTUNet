@@ -65,6 +65,6 @@ class DatasetFolder(object):
         if self.transform:
             img = self.transform(img)
         if self.out_name:
-            return img, label, img_name
+            return img, label, img_root
         else:
             return img, label

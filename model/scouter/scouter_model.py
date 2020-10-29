@@ -18,7 +18,7 @@ class SlotModel(nn.Module):
             if args.fix_parameter:
                 fix_parameter(self.backbone, [""], mode="fix")
                 # fix_parameter(self.backbone, ["layer4", "layer3"], mode="open")
-            self.slot = ScouterAttention(args, args.num_classes, self.slots_per_class, args.hidden_dim, vis=args.vis,
+            self.slot = ScouterAttention(args, self.slots_per_class, args.hidden_dim, vis=args.vis,
                     vis_id=args.vis_id, loss_status=args.loss_status, power=args.power, to_k_layer=args.to_k_layer)
             self.position_emb = build_position_encoding('sine', hidden_dim=args.hidden_dim)
             self.lambda_value = float(args.lambda_value)

@@ -1,8 +1,12 @@
 import numpy as np
 import torch
 from torch.utils.data import Sampler
+import torch
 
 __all__ = ['CategoriesSampler']
+
+torch.manual_seed(2020)
+torch.cuda.manual_seed(2020)
 
 
 class CategoriesSampler(Sampler):
@@ -31,6 +35,7 @@ class CategoriesSampler(Sampler):
             batch_gallery = []
             batch_query = []
             classes = torch.randperm(len(self.m_ind))[:self.n_way]
+            print(classes)
             for c in classes:
                 l = self.m_ind[c.item()]
                 pos = torch.randperm(l.size()[0])

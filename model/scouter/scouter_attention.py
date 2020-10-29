@@ -5,7 +5,7 @@ import numpy as np
 
 
 class ScouterAttention(nn.Module):
-    def __init__(self, args, num_classes, slots_per_class, dim, iters=3, eps=1e-8, vis=False, vis_id=0, loss_status=1, power=1, to_k_layer=1):
+    def __init__(self, args, slots_per_class, dim, iters=3, eps=1e-8, vis=False, vis_id=0, loss_status=1, power=1, to_k_layer=1):
         super().__init__()
         self.args = args
         self.slots_per_class = slots_per_class
@@ -68,20 +68,14 @@ class ScouterAttention(nn.Module):
                 slots_vis = (slots_vis.cpu().detach().numpy()).astype(np.uint8)
                 for id, image in enumerate(slots_vis):
                     image = Image.fromarray(image, mode='L').resize((self.args.img_size, self.args.img_size), resample=Image.BILINEAR)
-                    image.save(f'vis/{i}_slot_{id:d}.png')
+                    image.save(f'vis/att/{i}_slot_{id:d}.png')
 
         attn_relu = torch.relu(attn)
         slot_loss = torch.mean(attn_relu, (0, 1, 2))  # * self.slots_per_class
 
         if self.args.fsl:
-            # print(updates.size())
-            # print(torch.argmax(torch.mean(updates, dim=2), dim=1))
             return updates, torch.pow(slot_loss, self.power), attn
         else:
             return self.loss_status*torch.sum(updates, dim=2, keepdim=False), torch.pow(slot_loss, self.power)
 
 
-# if __name__ == '__main__':
-#     img = torch.randn(3, 100, 100)
-#     wbw = ScouterAttention(64, 1, 100)
-#     loss, att = wbw(img, img)
