@@ -3,56 +3,100 @@ from train import get_args_parser
 from torch.utils.data import DataLoader, Dataset
 import matplotlib.cm as mpl_color_map
 import copy
-from tqdm.auto import tqdm
-import tools.calculate_tool as cal
 from model.FSL_similarity import FSLSimilarity, SimilarityLoss
 from loaders.base_loader import make_loaders
 from PIL import Image
 import numpy as np
 import torch
+import os
+
+os.makedirs('vis/', exist_ok=True)
+# os.makedirs('vis/support', exist_ok=True)
+# os.makedirs('vis/query', exist_ok=True)
 
 
-@torch.no_grad()
-def evaluate(model, data_loader, device, criterion):
-    model.eval()
-    criterion.eval()
-    print("start test: ")
-    running_loss = 0.0
-    running_att_loss = 0.0
-    running_acc_95 = []
-    L = len(data_loader)
-    for i_batch, sample_batch in enumerate(tqdm(data_loader)):
-        inputs_query = torch.cat(list(sample_batch["query"]["image"].to(device, dtype=torch.float32)), dim=0)
-        labels_query = sample_batch["query"]["label"].to(device, dtype=torch.int64)
-        inputs_support = torch.cat(list(sample_batch["support"]["image"].to(device, dtype=torch.float32)), dim=0)
-        labels_support = sample_batch["support"]["label"].to(device, dtype=torch.int64)
-        total_input = torch.cat([inputs_support, inputs_query], dim=0)
-        out, att_loss = model(total_input)
-        loss, acc = criterion(out, labels_support, labels_query, att_loss, "val")
-        a = loss.item()
-        running_loss += a
-        running_att_loss += att_loss.item()
-        running_acc_95.append(round(acc.item(), 4))
+def test(args, model, image, record_name):
+    image = image.to(device, dtype=torch.float32)
+    b = image.size()[0]
+    output, att = model(image)
 
-    print("loss: ", round(running_loss/L, 3))
-    print("acc_95: ", round(cal.compute_confidence_interval(running_acc_95)[0], 4))
-    print("interval: ", round(cal.compute_confidence_interval(running_acc_95)[1], 4))
+    for i in range(b):
+        image_raw = Image.open(record_name[i][0]).convert('RGB').resize((args.img_size, args.img_size), resample=Image.BILINEAR)
+        image_raw.save('vis/image.png')
+        image_raw.save("vis/" + str(i) + "image.png")
+        for id in range(args.num_slot):
+            slot_image = np.array(Image.open(f'vis/{i}_slot_{id}.png'), dtype=np.uint8)
+            heatmap_only, heatmap_on_image = apply_colormap_on_image(image_raw, slot_image, 'jet')
+            heatmap_on_image.save("vis/" + f'{i}_slot_mask_{id}.png')
+
+        if i < args.n_shot*args.n_way:
+            affine_name = "support"
+            index = i
+        else:
+            affine_name = "query"
+            index = i - args.n_shot*args.n_way
+        sum_slot = np.array(Image.open(f'vis/affine/affined_{affine_name}_{index}.png'), dtype=np.uint8)
+        heatmap_only, heatmap_on_image = apply_colormap_on_image(image_raw, sum_slot, 'jet')
+        heatmap_on_image.save("vis/affine/" + f'colored_affined_{affine_name}_{index}.png')
+
+        sum_slot = np.array(Image.open(f'vis/affine/origin_{affine_name}_{index}.png'), dtype=np.uint8)
+        heatmap_only, heatmap_on_image = apply_colormap_on_image(image_raw, sum_slot, 'jet')
+        heatmap_on_image.save("vis/affine/" + f'colored_origin_{affine_name}_{index}.png')
+
+
+def apply_colormap_on_image(org_im, activation, colormap_name):
+    """
+        Apply heatmap on image
+    Args:
+        org_img (PIL img): Original image
+        activation_map (numpy arr): Activation map (grayscale) 0-255
+        colormap_name (str): Name of the colormap
+    """
+    # Get colormap
+    color_map = mpl_color_map.get_cmap(colormap_name)
+    no_trans_heatmap = color_map(activation)
+    # Change alpha channel in colormap to make sure original image is displayed
+    heatmap = copy.copy(no_trans_heatmap)
+    heatmap[:, :, 3] = 0.4
+    heatmap = Image.fromarray((heatmap*255).astype(np.uint8))
+    no_trans_heatmap = Image.fromarray((no_trans_heatmap*255).astype(np.uint8))
+
+    # Apply heatmap on iamge
+    heatmap_on_image = Image.new("RGBA", org_im.size)
+    heatmap_on_image = Image.alpha_composite(heatmap_on_image, org_im.convert('RGBA'))
+    heatmap_on_image = Image.alpha_composite(heatmap_on_image, heatmap)
+    return no_trans_heatmap, heatmap_on_image
 
 
 def main():
-    criterien = SimilarityLoss(args)
     model = FSLSimilarity(args)
-    model_name = "scouter_FSL_noslot64_6.pth"
+    model_name = "scouter_FSL_our_19.pth"
     checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
     model.load_state_dict(checkpoint["model"])
     model.to(device)
     model.eval()
-    dataset_test = make_loaders(args)["test"]
-    evaluate(model, dataset_test, device, criterien)
+    dataset_val = make_loaders(args)["val"]
+    data = iter(dataset_val).next()
+    inputs_query = data["query"]["image"][0]
+    query_name = data["query"]["name"]
+    labels_query = data["query"]["label"].to(device, dtype=torch.int64)
+    inputs_support = data["support"]["image"][0]
+    support_name = data["support"]["name"]
+    cls = data["selected_cls"][0]
+    print(cls)
+    total_input = torch.cat([inputs_support, inputs_query], dim=0)
+    record_name = support_name + query_name
+    test(args, model, total_input, record_name)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('model test script', parents=[get_args_parser()])
     args = parser.parse_args()
+    args.batch_size = 1
+    args.num_slot = 7
+    args.query = 1
+    args.vis = True
+    args.fsl = True
     device = torch.device(args.device)
+    criterion = SimilarityLoss(args).to(device)
     main()
