@@ -79,12 +79,12 @@ class FSLSimilarity(nn.Module):
         if self.use_threshold:
             attn_support = self.threshold(attn_support)
             attn_query = self.threshold(attn_query)
-        weighted_support = torch.mean(attn_support*(x_raw_support.reshape(self.args.n_way, dim, size, size)), dim=(3, 4))
-        weighted_query = torch.mean(attn_query*(x_raw_query.reshape(self.args.n_way*self.args.query, dim, size, size)), dim=(3, 4))
+        weighted_support = torch.mean(attn_support*(x_raw_support.reshape(self.args.n_way, dim, size, size)), dim=(2, 3))
+        weighted_query = torch.mean(attn_query*(x_raw_query.reshape(self.args.n_way*self.args.query, dim, size, size)), dim=(2, 3))
 
         input_fc = torch.cat(
-            [weighted_support.unsqueeze(1).expand(-1, self.args.n_way*self.args.query, -1, -1),
-             weighted_query.unsqueeze(2).expand(-1, -1, self.args.n_way, -1)],
+            [weighted_support.unsqueeze(0).expand(self.args.n_way*self.args.query, -1, -1),
+             weighted_query.unsqueeze(1).expand(-1, self.args.n_way, -1)],
             dim=-1
         )
 
@@ -142,6 +142,6 @@ class SimilarityLoss(nn.Module):
         BCELoss = self.BCEloss(out_fc, labels_query_onehot.float())
         loss = BCELoss + float(self.args.lambda_value) * att_loss
         logits = F.log_softmax(out_fc, dim=-1)
-        _, y_hat = logits.max(2)
+        _, y_hat = logits.max(1)
         acc = torch.eq(y_hat, labels_query).float().mean()
         return loss, acc
