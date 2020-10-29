@@ -80,8 +80,8 @@ class FSLSimilarity(nn.Module):
             self.vis(attn_query, "affined_query", self.u_vis)
             attn_query = attn_query.reshape(b, self.args.n_way*self.args.query, 1, size, size)
 
-        attn_support = self.threshold(attn_support)
-        attn_query = self.threshold(attn_query)
+        # attn_support = self.threshold(attn_support)
+        # attn_query = self.threshold(attn_query)
         weighted_support = torch.mean(attn_support*(x_raw_support.reshape(b, self.args.n_way, dim, size, size)), dim=(3, 4))
         weighted_query = torch.mean(attn_query*(x_raw_query.reshape(b, self.args.n_way*self.args.query, dim, size, size)), dim=(3, 4))
 
@@ -126,9 +126,6 @@ class FSLSimilarity(nn.Module):
         im = seq(images=np.array(data))
         im = torch.from_numpy(im)
         im = im.permute((0, 3, 1, 2)).cuda()
-        # noise = torch.rand(data.size()).cuda()
-        # data = data + noise
-        # data[data>1] = data[data>1]-1.
         return im
 
 
