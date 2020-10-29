@@ -66,5 +66,5 @@ if __name__ == '__main__':
     args.use_slot = True
     args.drop_dim = False
     args.lr = 0.0001
-    main(args, selection=[0, 10, 20, 30, 40, 50, 60])
+    main(args, selection=[0, 10, 20, 30, 40, 50, 60, 70, 80, 90])
 
