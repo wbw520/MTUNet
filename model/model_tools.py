@@ -50,11 +50,11 @@ def load_backbone(args, drop=True):
     if args.use_slot:
         if args.use_pre:
             checkpoint = torch.load(f"saved_model/{args.dataset}_no_slot_checkpoint.pth")
-            # new_state_dict = OrderedDict()
-            # for k, v in checkpoint["model"].items():
-            #     name = k[9:]  # remove `backbone.`
-            #     new_state_dict[name] = v
-            bone.load_state_dict(checkpoint["model"])
+            new_state_dict = OrderedDict()
+            for k, v in checkpoint["model"].items():
+                name = k[9:]  # remove `backbone.`
+                new_state_dict[name] = v
+            bone.load_state_dict(new_state_dict)
             print("load pre feature extractor parameter over")
         bone.avg_pool = Identical()
         bone.linear = Identical()

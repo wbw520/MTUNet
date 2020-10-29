@@ -26,7 +26,6 @@ def get_args_parser():
     parser.add_argument('--test_classes', default=20, type=int)
 
     # train setting
-    parser.add_argument('--fsl', default=True, type=bool, help='whether train backbone')
     parser.add_argument('--lr', default=0.001, type=float)
     parser.add_argument('--lr_drop', default=10, type=int)
     parser.add_argument('--batch_size', default=2, type=int)
@@ -38,6 +37,7 @@ def get_args_parser():
     parser.add_argument('--fix_parameter', default=True, type=bool, help='whether fix parameter for backbone')
 
     # slot setting
+    parser.add_argument('--drop_dim', default=True, type=bool, help='drop dim for avg')
     parser.add_argument('--num_slot', default=7, type=int, help='number of slot')
     parser.add_argument('--use_pre', default=True, type=bool, help='whether use pre parameter for backbone')
     parser.add_argument('--loss_status', default=1, type=int, help='positive or negative loss')
