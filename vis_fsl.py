@@ -10,8 +10,8 @@ import torch
 import os
 
 os.makedirs('vis/', exist_ok=True)
-# os.makedirs('vis/support', exist_ok=True)
-# os.makedirs('vis/query', exist_ok=True)
+os.makedirs('vis/att', exist_ok=True)
+os.makedirs('vis/affine', exist_ok=True)
 
 
 def test(args, model, image, record_name):
