@@ -6,7 +6,7 @@ import time
 import datetime
 import tools.prepare_things as prt
 from pathlib import Path
-from engine_similarity import train_one_epoch, evaluate
+from engine_fsl import train_one_epoch, evaluate
 from tools.calculate_tool import MetricLogSimilar
 from tools.Adabelif import AdaBelief
 from loaders.base_loader import get_dataloader
@@ -46,7 +46,7 @@ def main(args):
         lr_scheduler.step()
 
         if args.output_dir:
-            checkpoint_paths = [output_dir / ("scouter_FSL_aff_" + str(epoch) + ".pth")]
+            checkpoint_paths = [output_dir / ("scouter_FSL_affine_" + str(epoch) + ".pth")]
             if record["val"]["accm"][epoch-1] > max_acc1:
                 print("get higher acc save current model")
                 max_acc1 = record["val"]["accm"][epoch-1]

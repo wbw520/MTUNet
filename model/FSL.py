@@ -49,7 +49,8 @@ class FSLSimilarity(nn.Module):
                                         nn.Linear(2048, 1),
                                         nn.Sigmoid(),
         )
-        self.use_affine = False
+        self.use_affine = True
+        self.use_threshold = False
         self.u_vis = False
 
     def forward(self, x):
@@ -57,8 +58,6 @@ class FSLSimilarity(nn.Module):
         x_pe, x, x_raw = self.feature_deal(x)
         x_raw = torch.relu(x_raw)
         x, attn_loss, attn = self.slot(x_pe, x)
-        # out_support = x[:b*self.args.n_way*self.args.n_shot, :, :]
-        # out_query = x[b*self.args.n_way*self.args.n_shot:, :, :]
         attn_support = attn[:b*self.args.n_way*self.args.n_shot, :, :]
         attn_query = attn[b*self.args.n_way*self.args.n_shot:, :, :]
         x_raw_support = x_raw[:b*self.args.n_way*self.args.n_shot]
@@ -80,8 +79,9 @@ class FSLSimilarity(nn.Module):
             self.vis(attn_query, "affined_query", self.u_vis)
             attn_query = attn_query.reshape(b, self.args.n_way*self.args.query, 1, size, size)
 
-        # attn_support = self.threshold(attn_support)
-        # attn_query = self.threshold(attn_query)
+        if self.use_threshold:
+            attn_support = self.threshold(attn_support)
+            attn_query = self.threshold(attn_query)
         weighted_support = torch.mean(attn_support*(x_raw_support.reshape(b, self.args.n_way, dim, size, size)), dim=(3, 4))
         weighted_query = torch.mean(attn_query*(x_raw_query.reshape(b, self.args.n_way*self.args.query, dim, size, size)), dim=(3, 4))
 

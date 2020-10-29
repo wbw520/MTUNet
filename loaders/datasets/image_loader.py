@@ -18,7 +18,6 @@ class DatasetFolder(object):
         label_key = sorted(np.unique(np.array(ori_labels)))
         label_map = dict(zip(label_key, range(len(label_key))))
         mapped_labels = [label_map[x] for x in ori_labels]
-
         self.split_type = split_type
         self.root = root + "/" + set_name
         self.transform = transform
@@ -31,8 +30,11 @@ class DatasetFolder(object):
         return self.length
 
     def __getitem__(self, index):
-        folder_name = self.data[index][:9]
-        img_name = self.data[index]
+        if self.split_type == "miniImageNet":
+            folder_name = self.data[index][:9]
+            img_name = self.data[index]
+        elif self.split_type == "CUB200":
+            folder_name, img_name = self.data[index].split("/")
         img_root = os.path.join(self.root, self.split_type, folder_name, img_name)
         assert os.path.isfile(img_root)
         img = Image.open(img_root).convert('RGB')
