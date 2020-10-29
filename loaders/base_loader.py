@@ -16,7 +16,7 @@ def get_li(data, cls, index):
 def get_dataloader(args, split, shuffle=True, out_name=False, sample=None):
     # sample: iter, way, shot, query
     transform = datasets.make_transform(args, split)
-    sets = datasets.DatasetFolder(args.data_root, args.data_root, split, transform, out_name=out_name)
+    sets = datasets.DatasetFolder(args.data_root, args.dataset, split, transform, out_name=out_name)
     if sample is not None:
         sampler = datasets.CategoriesSampler(sets.labels, *sample)
         loader = torch.utils.data.DataLoader(sets, batch_sampler=sampler,
@@ -30,8 +30,7 @@ def get_dataloader(args, split, shuffle=True, out_name=False, sample=None):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('model training and evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
-    sample_info = [args.val_episodes, args.n_way, args.n_shot, args.query]
-    wbw =get_dataloader(args, "val", sample=sample_info)
+    wbw =get_dataloader(args, "val")
     print(len(wbw))
     for i_batch, sample_batch in enumerate(wbw):
         # print(sample_batch["query"]["image"].size())
