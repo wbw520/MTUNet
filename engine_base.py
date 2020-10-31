@@ -3,16 +3,16 @@ import tools.calculate_tool as cal
 from tqdm.auto import tqdm
 
 
-def train_one_epoch(args, model, data_loader, device, record, epoch, optimizer, criterien=None):
-    calculation(args, model, "train", data_loader, device, record, epoch, optimizer, criterien=criterien)
+def train_one_epoch(args, model, data_loader, device, record, epoch, optimizer):
+    calculation(args, model, "train", data_loader, device, record, epoch, optimizer)
 
 
 @torch.no_grad()
-def evaluate(args, model, data_loader, device, record, epoch, criterien=None):
-    calculation(args, model, "val", data_loader, device, record, epoch, criterien=criterien)
+def evaluate(args, model, data_loader, device, record, epoch):
+    calculation(args, model, "val", data_loader, device, record, epoch)
 
 
-def calculation(args, model, mode, data_loader, device, record, epoch, optimizer=None, criterien=None):
+def calculation(args, model, mode, data_loader, device, record, epoch, optimizer=None):
     if mode == "train":
         model.train()
     else:
@@ -23,6 +23,7 @@ def calculation(args, model, mode, data_loader, device, record, epoch, optimizer
     running_att_loss = 0.0
     running_log_loss = 0.0
     print("start " + mode + " :" + str(epoch))
+    print("current learning rate: ", optimizer.param_groups[0]["lr"])
     for i, (inputs, target) in enumerate(tqdm(data_loader)):
         inputs = inputs.to(device, dtype=torch.float32)
         labels = target.to(device, dtype=torch.int64)

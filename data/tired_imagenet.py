@@ -4,10 +4,11 @@ import cv2
 import os
 import argparse
 import tqdm
+import shutil
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data', type=str, help='path to the data')
-parser.add_argument('--split', type=str, help='path to the split folder')
+parser.add_argument('--data', type=str, help='path to the data', default="/home/wbw/PAN/FSL_data/tiered-imagenet/")
+parser.add_argument('--split', type=str, help='path to the split folder', default="data_split/tiredImageNet")
 args = parser.parse_args()
 
 
@@ -27,6 +28,7 @@ def save_imgs(prex1, prex2, tag):
 
 
 if __name__ == '__main__':
+    print("extract images")
     prex1 = args.data
     prex2 = prex1 + 'data/'
     if not os.path.isdir(prex2):
@@ -37,21 +39,35 @@ if __name__ == '__main__':
 
     if not os.path.isdir(args.split):
         os.makedirs(args.split)
+
+    print("split into train val test folder")
     data = os.listdir(prex2)
+    root_folder_train = os.path.join(prex1, "train")
+    os.mkdir(root_folder_train)
     with open(args.split + '/train.csv', 'w') as f:
+        f.write('{},{}\n'.format("filename", "label"))
         for name in data:
             if 'train' in name:
+                shutil.copy(prex2+name, root_folder_train + "/" + name)
                 label = name.split('.')[0].split('_')[-2]
                 f.write('{},{}\n'.format(name, label))
 
+    root_folder_val = os.path.join(prex1, "val")
+    os.mkdir(root_folder_val)
     with open(args.split + '/val.csv', 'w') as f:
+        f.write('{},{}\n'.format("filename", "label"))
         for name in data:
             if 'val' in name:
+                shutil.copy(prex2+name, root_folder_val + "/" + name)
                 label = name.split('.')[0].split('_')[-2]
                 f.write('{},{}\n'.format(name, label))
 
+    root_folder_test = os.path.join(prex1, "test")
+    os.mkdir(root_folder_test)
     with open(args.split + '/test.csv', 'w') as f:
+        f.write('{},{}\n'.format("filename", "label"))
         for name in data:
             if 'test' in name:
+                shutil.copy(prex2+name, root_folder_test + "/" + name)
                 label = name.split('.')[0].split('_')[-2]
                 f.write('{},{}\n'.format(name, label))

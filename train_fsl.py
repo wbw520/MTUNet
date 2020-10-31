@@ -21,10 +21,11 @@ def main(args):
     criterien = SimilarityLoss(args).to(device)
     model = FSLSimilarity(args)
 
-    model_name = "7_mini_use_slot_no_fsl_checkpoint.pth"
+    model_name = f"{args.dataset}_use_slot_checkpoint.pth"
     model.to(device)
     checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
     model.load_state_dict(checkpoint["model"], strict=False)
+    print("load pre-model " + model_name + " ready")
 
     print_param(model)
     params = [p for p in model.parameters() if p.requires_grad]
@@ -39,25 +40,25 @@ def main(args):
     log = MetricLogSimilar(args)
     record = log.record
 
-    max_acc1 = 0
+    max_acc = 0
     for epoch in range(args.start_epoch, args.epochs):
         train_one_epoch(model, loaders_train, device, record, epoch, optimizer, criterien)
         evaluate(model, loaders_val, device, record, epoch, criterien)
         lr_scheduler.step()
 
         if args.output_dir:
-            checkpoint_paths = [output_dir / ("scouter_FSL_our_" + str(epoch) + ".pth")]
-            if record["val"]["accm"][epoch-1] > max_acc1:
+            checkpoint_paths = [output_dir / (f"{args.dataset}_" + 'fsl_checkpoint.pth')]
+            if record["val"]["accm"][epoch-1] > max_acc:
                 print("get higher acc save current model")
-                max_acc1 = record["val"]["accm"][epoch-1]
-            for checkpoint_path in checkpoint_paths:
-                prt.save_on_master({
-                    'model': model.state_dict(),
-                    'optimizer': optimizer.state_dict(),
-                    'lr_scheduler': lr_scheduler.state_dict(),
-                    'epoch': epoch,
-                    'args': args,
-                }, checkpoint_path)
+                max_acc = record["val"]["accm"][epoch-1]
+                for checkpoint_path in checkpoint_paths:
+                    prt.save_on_master({
+                        'model': model.state_dict(),
+                        'optimizer': optimizer.state_dict(),
+                        'lr_scheduler': lr_scheduler.state_dict(),
+                        'epoch': epoch,
+                        'args': args,
+                    }, checkpoint_path)
         log.print_metric()
 
     total_time = time.time() - start_time
@@ -68,4 +69,6 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('model training and evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
+    args.slot_base_train = True
+    args.slot_num = 10
     main(args)

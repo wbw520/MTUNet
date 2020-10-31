@@ -2,6 +2,7 @@ import model.extractor as base_bone
 import torch
 import torch.nn as nn
 from collections import OrderedDict
+from timm.models import create_model
 
 
 def fix_parameter(model, name_fix, mode="open"):
@@ -45,19 +46,54 @@ class Trans(nn.Module):
         return x
 
 
-def load_backbone(args, drop=True):
-    bone = base_bone.__dict__[args.base_model](num_classes=args.num_classes, drop_dim=drop)
+# def load_backbone(args, drop=True):
+#     bone = base_bone.__dict__[args.base_model](num_classes=args.num_classes, drop_dim=drop)
+#     if args.use_slot:
+#         if args.use_pre:
+#             checkpoint = torch.load(f"saved_model/{args.dataset}_no_slot_checkpoint.pth")
+#             new_state_dict = OrderedDict()
+#             for k, v in checkpoint["model"].items():
+#                 name = k[9:]  # remove `backbone.`
+#                 new_state_dict[name] = v
+#             bone.load_state_dict(new_state_dict)
+#             print("load pre feature extractor parameter over")
+#         bone.avg_pool = Identical()
+#         bone.linear = Identical()
+#     return bone
+
+
+def load_backbone(args):
+    bone = create_model(
+        args.base_model,
+        pretrained=False,
+        num_classes=args.num_classes)
     if args.use_slot:
         if args.use_pre:
             checkpoint = torch.load(f"saved_model/{args.dataset}_no_slot_checkpoint.pth")
             new_state_dict = OrderedDict()
             for k, v in checkpoint["model"].items():
-                name = k[9:]  # remove `backbone.`
+                name = k[9:] # remove `backbone.`
                 new_state_dict[name] = v
             bone.load_state_dict(new_state_dict)
-            print("load pre feature extractor parameter over")
-        bone.avg_pool = Identical()
-        bone.linear = Identical()
+            print("load pre dataset parameter over")
+        if not args.grad:
+            if 'seresnet' in args.model:
+                bone.avg_pool = Identical()
+                bone.last_linear = Identical()
+            elif 'res' in args.model:
+                bone.global_pool = Identical()
+                bone.fc = Identical()
+            elif 'efficient' in args.model:
+                bone.global_pool = Identical()
+                bone.classifier = Identical()
+            elif 'densenet' in args.model:
+                bone.global_pool = Identical()
+                bone.classifier = Identical()
+            elif 'mobilenet' in args.model:
+                bone.global_pool = Identical()
+                bone.conv_head = Identical()
+                bone.act2 = Identical()
+                bone.classifier = Identical()
     return bone
 
 

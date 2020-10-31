@@ -62,31 +62,31 @@ class FSLSimilarity(nn.Module):
         size = x_raw_support.size()[-1]
         dim = x_raw_support.size()[1]
 
-        attn_support = attn_support.mean(1, keepdim=True).reshape(self.args.n_way, 1, size, size)
+        attn_support = attn_support.mean(1, keepdim=True).reshape(self.args.n_way*self.args.n_shot, 1, size, size)
         attn_query = attn_query.mean(1, keepdim=True).reshape(self.args.n_way*self.args.query, 1, size, size)
         if self.use_affine:
-            attn_support = attn_support.reshape(self.args.n_way, 1, size, size)
             self.vis(attn_support, "origin_support", self.u_vis)
             attn_support = self.affine(attn_support)
             self.vis(attn_support, "affined_support", self.u_vis)
-            attn_support = attn_support.reshape(self.args.n_way, 1, size, size)
-            attn_query = attn_query.reshape(self.args.n_way*self.args.query, 1, size, size)
             self.vis(attn_query, "origin_query", self.u_vis)
             attn_query = self.affine(attn_query)
             self.vis(attn_query, "affined_query", self.u_vis)
-            attn_query = attn_query.reshape(self.args.n_way*self.args.query, 1, size, size)
 
         if self.use_threshold:
             attn_support = self.threshold(attn_support)
             attn_query = self.threshold(attn_query)
+
         weighted_support = torch.mean(attn_support*(x_raw_support.reshape(self.args.n_way, dim, size, size)), dim=(2, 3))
         weighted_query = torch.mean(attn_query*(x_raw_query.reshape(self.args.n_way*self.args.query, dim, size, size)), dim=(2, 3))
+        # weighted_support = torch.mean(x_raw_support.reshape(self.args.n_way, dim, size, size), dim=(2, 3))
+        # weighted_query = torch.mean(x_raw_query.reshape(self.args.n_way*self.args.query, dim, size, size), dim=(2, 3))
 
-        input_fc = torch.cat(
-            [weighted_support.unsqueeze(0).expand(self.args.n_way*self.args.query, -1, -1),
-             weighted_query.unsqueeze(1).expand(-1, self.args.n_way, -1)],
-            dim=-1
-        )
+        if self.args.n_shot == 1:
+            weighted_support = weighted_support.unsqueeze(0).expand(self.args.n_way*self.args.query, -1, -1)
+        else:
+            weighted_support = weighted_support.unsqueeze(0).expand(self.args.n_way*self.args.query, -1, -1).reshape(self.args.n_way*self.args.query, self.args.n_way, self.args.n_shot, -1).mean(-2)
+        weighted_query = weighted_query.unsqueeze(1).expand(-1, self.args.n_way, -1)
+        input_fc = torch.cat([weighted_support, weighted_query], dim=-1)
 
         out_fc = self.classifier(input_fc).squeeze(-1)
         return out_fc, attn_loss
@@ -135,7 +135,7 @@ class SimilarityLoss(nn.Module):
     def get_slots(self, input, max):
         return torch.gather(input, 3, max)
 
-    def forward(self, out_fc, att_loss, mode):
+    def forward(self, out_fc, att_loss):
         labels_query = Variable(torch.arange(0, self.args.n_way).view(self.args.n_way, 1).expand(self.args.n_way, self.args.query).long().cuda(), requires_grad=False).reshape(-1)
         labels_query_onehot = torch.zeros(labels_query.size()+(5,), dtype=labels_query.dtype).to(labels_query.device)
         labels_query_onehot.scatter_(-1, labels_query.unsqueeze(-1), 1)
@@ -144,4 +144,4 @@ class SimilarityLoss(nn.Module):
         logits = F.log_softmax(out_fc, dim=-1)
         _, y_hat = logits.max(1)
         acc = torch.eq(y_hat, labels_query).float().mean()
-        return loss, acc
+        return loss, acc, logits

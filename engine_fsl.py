@@ -12,11 +12,12 @@ def train_one_epoch(model, data_loader, device, record, epoch, optimizer, criter
     running_att_loss = 0.0
     running_acc_95 = []
     print("start train: " + str(epoch))
+    print(optimizer.param_groups[0]["lr"])
     for i, (inputs, target) in enumerate(tqdm(data_loader)):
         inputs = inputs.to(device, dtype=torch.float32)
         optimizer.zero_grad()
         out, att_loss = model(inputs)
-        loss, acc = criterion(out, att_loss, "train")
+        loss, acc, logits = criterion(out, att_loss)
         loss.backward()
         optimizer.step()
 
@@ -44,7 +45,7 @@ def evaluate(model, data_loader, device, record, epoch, criterion):
         inputs = inputs.to(device, dtype=torch.float32)
 
         out, att_loss = model(inputs)
-        loss, acc = criterion(out, att_loss, "train")
+        loss, acc, logits = criterion(out, att_loss)
         a = loss.item()
         running_loss += a
         running_att_loss += att_loss.item()

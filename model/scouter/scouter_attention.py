@@ -45,10 +45,12 @@ class ScouterAttention(nn.Module):
 
             dots = torch.einsum('bid,bjd->bij', q, k) * self.scale
             dots = torch.div(dots, dots.sum(2).expand_as(dots.permute([2,0,1])).permute([1,2,0])) * dots.sum(2).sum(1).expand_as(dots.permute([1,2,0])).permute([2,0,1])# * 10
-            attn1 = dots.softmax(dim=1)
-            attn2 = dots.sigmoid()
-            attn = attn1*attn2
-            # attn = torch.sigmoid(dots)
+            if self.args.slot_base_train:
+                attn = torch.sigmoid(dots)
+            else:
+                attn1 = dots.softmax(dim=1)
+                attn2 = attn1.softmax(dim=2)
+                attn = attn1*attn2
             updates = torch.einsum('bjd,bij->bid', v, attn)
             updates = updates / v.size(2)
             slots, _ = self.gru(

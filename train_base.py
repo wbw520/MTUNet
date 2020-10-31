@@ -6,7 +6,7 @@ import time
 import datetime
 import tools.prepare_things as prt
 from pathlib import Path
-from engine_base import train_one_epoch
+from engine_base import train_one_epoch, evaluate
 from tools.Adabelif import AdaBelief
 from tools.calculate_tool import MetricLog
 from loaders.base_loader import get_dataloader
@@ -15,11 +15,14 @@ import os
 
 def main(args, selection=None):
     device = torch.device(args.device)
-    loaders_train = get_dataloader(args, "train", selection=selection)
+    loaders_train = get_dataloader(args, "train", selection=selection, mode="train")
+    loaders_val = get_dataloader(args, "train", selection=selection, mode="val")
     model = SlotModel(args)
     model.to(device)
-    print_param(model)
+    # print_param(model)
     params = [p for p in model.parameters() if p.requires_grad]
+    n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print('number of params:', n_parameters)
 
     output_dir = Path(args.output_dir)
     os.makedirs(output_dir, exist_ok=True)
@@ -30,14 +33,18 @@ def main(args, selection=None):
     start_time = time.time()
     log = MetricLog(args)
     record = log.record
+    max_acc = 0
 
     for epoch in range(args.start_epoch, args.epochs):
         train_one_epoch(args, model, loaders_train, device, record, epoch, optimizer)
+        evaluate(args, model, loaders_val, device, record, epoch)
         lr_scheduler.step()
 
         if args.output_dir:
-            checkpoint_paths = [output_dir / (f"{args.dataset}_" + f"{'use_slot_' if args.use_slot else 'no_slot_'}" + 'checkpoint.pth')]
-            if epoch == args.epochs - 1:
+            checkpoint_paths = [output_dir / (f"{args.dataset}_" + f"{args.base_model}_" + f"{'use_slot_' if args.use_slot else 'no_slot_'}" + 'checkpoint.pth')]
+            if record["val"]["acc"][epoch-1] > max_acc:
+                print("get higher acc save current model")
+                max_acc = record["val"]["acc"][epoch-1]
                 for checkpoint_path in checkpoint_paths:
                     prt.save_on_master({
                         'model': model.state_dict(),
@@ -59,14 +66,16 @@ if __name__ == '__main__':
     args.fsl = False
     args.lr_drop = 30
     args.epochs = 80
-    args.batch_size = 256
+    args.batch_size = 64
     args.use_slot = False
     args.drop_dim = True
     print("start base model training: ")
     main(args)
-    args.use_slot = True
-    args.drop_dim = False
-    args.lr = 0.0001
-    args.slot_num = 10
-    main(args, selection=[0, 10, 20, 30, 40, 50, 60, 70, 80, 90])
+    # args.use_slot = True
+    # args.slot_base_train = True
+    # args.drop_dim = False
+    # args.lr = 0.0001
+    # args.slot_num = 10
+    # print("start base scouter model training: ")
+    # main(args, selection=[0, 10, 20, 30, 40, 50, 60, 70, 80, 90])
 

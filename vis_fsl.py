@@ -18,6 +18,8 @@ def test(args, model, image, record_name):
     image = image.to(device, dtype=torch.float32)
     b = image.size()[0]
     output, att = model(image)
+    loss, acc, logits = criterion(output, att, "train")
+    print(logits.size())
 
     for i in range(b):
         image_raw = Image.open(record_name[i]).convert('RGB').resize((args.img_size, args.img_size), resample=Image.BILINEAR)
