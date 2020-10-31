@@ -23,7 +23,8 @@ def calculation(args, model, mode, data_loader, device, record, epoch, optimizer
     running_att_loss = 0.0
     running_log_loss = 0.0
     print("start " + mode + " :" + str(epoch))
-    print("current learning rate: ", optimizer.param_groups[0]["lr"])
+    if optimizer is not None:
+        print("current learning rate: ", optimizer.param_groups[0]["lr"])
     for i, (inputs, target) in enumerate(tqdm(data_loader)):
         inputs = inputs.to(device, dtype=torch.float32)
         labels = target.to(device, dtype=torch.int64)
