@@ -18,8 +18,7 @@ def test(args, model, image, record_name):
     image = image.to(device, dtype=torch.float32)
     b = image.size()[0]
     output, att = model(image)
-    loss, acc, logits = criterion(output, att, "train")
-    print(logits.size())
+    loss, acc, logits = criterion(output, att)
 
     for i in range(b):
         image_raw = Image.open(record_name[i]).convert('RGB').resize((args.img_size, args.img_size), resample=Image.BILINEAR)
@@ -70,7 +69,7 @@ def apply_colormap_on_image(org_im, activation, colormap_name):
 
 def main():
     model = FSLSimilarity(args)
-    model_name = "scouter_FSL_our_19.pth"
+    model_name = "scouter_FSL_our1_14.pth"
     checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
     model.load_state_dict(checkpoint["model"])
     model.to(device)
@@ -91,6 +90,7 @@ if __name__ == '__main__':
     args.query = 1
     args.vis = True
     args.fsl = True
+    args.slot_base_train = False
     device = torch.device(args.device)
     criterion = SimilarityLoss(args).to(device)
     main()

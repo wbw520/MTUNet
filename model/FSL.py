@@ -13,6 +13,10 @@ import numpy as np
 
 def load_base(args):
     bone = base_bone.__dict__[args.base_model](num_classes=args.num_classes, drop_dim=args.drop_dim, extract=False)
+    model_name = f"{args.dataset}_{args.base_model}_no_slot_checkpoint.pth"
+    checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
+    bone.load_state_dict(checkpoint["model"], strict=True)
+    print("load pre-model " + model_name + " ready")
     bone.avg_pool = Identical()
     bone.linear = Identical()
     return bone
@@ -36,9 +40,9 @@ class FSLSimilarity(nn.Module):
         self.lambda_value = float(args.lambda_value)
         self.avg_pool = nn.AdaptiveAvgPool2d((1, 1))
         self.classifier = nn.Sequential(
-                                        nn.LayerNorm(1024),
+                                        nn.LayerNorm(args.channel*2),
                                         nn.Dropout(0.5),
-                                        nn.Linear(1024, 2048),
+                                        nn.Linear(args.channel*2, 2048),
                                         nn.ReLU(),
                                         nn.Dropout(0.5),
                                         nn.Linear(2048, 2048),
@@ -64,6 +68,11 @@ class FSLSimilarity(nn.Module):
 
         attn_support = attn_support.mean(1, keepdim=True).reshape(self.args.n_way*self.args.n_shot, 1, size, size)
         attn_query = attn_query.mean(1, keepdim=True).reshape(self.args.n_way*self.args.query, 1, size, size)
+
+        if self.use_threshold:
+            attn_support = self.threshold(attn_support)
+            attn_query = self.threshold(attn_query)
+
         if self.use_affine:
             self.vis(attn_support, "origin_support", self.u_vis)
             attn_support = self.affine(attn_support)
@@ -72,14 +81,8 @@ class FSLSimilarity(nn.Module):
             attn_query = self.affine(attn_query)
             self.vis(attn_query, "affined_query", self.u_vis)
 
-        if self.use_threshold:
-            attn_support = self.threshold(attn_support)
-            attn_query = self.threshold(attn_query)
-
-        weighted_support = torch.mean(attn_support*(x_raw_support.reshape(self.args.n_way, dim, size, size)), dim=(2, 3))
+        weighted_support = torch.mean(attn_support*(x_raw_support.reshape(self.args.n_way*self.args.n_shot, dim, size, size)), dim=(2, 3))
         weighted_query = torch.mean(attn_query*(x_raw_query.reshape(self.args.n_way*self.args.query, dim, size, size)), dim=(2, 3))
-        # weighted_support = torch.mean(x_raw_support.reshape(self.args.n_way, dim, size, size), dim=(2, 3))
-        # weighted_query = torch.mean(x_raw_query.reshape(self.args.n_way*self.args.query, dim, size, size), dim=(2, 3))
 
         if self.args.n_shot == 1:
             weighted_support = weighted_support.unsqueeze(0).expand(self.args.n_way*self.args.query, -1, -1)
@@ -87,7 +90,6 @@ class FSLSimilarity(nn.Module):
             weighted_support = weighted_support.unsqueeze(0).expand(self.args.n_way*self.args.query, -1, -1).reshape(self.args.n_way*self.args.query, self.args.n_way, self.args.n_shot, -1).mean(-2)
         weighted_query = weighted_query.unsqueeze(1).expand(-1, self.args.n_way, -1)
         input_fc = torch.cat([weighted_support, weighted_query], dim=-1)
-
         out_fc = self.classifier(input_fc).squeeze(-1)
         return out_fc, attn_loss
 

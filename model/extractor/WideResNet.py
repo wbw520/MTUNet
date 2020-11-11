@@ -47,10 +47,11 @@ class wide_basic(nn.Module):
 
 
 class Wide_ResNet(nn.Module):
-    def __init__(self, depth=20, widen_factor=10, dropout_rate=0, num_classes=1000, extractor=False):
+    def __init__(self, depth=20, widen_factor=10, dropout_rate=0, num_classes=1000, drop_dim=True, extract=False):
         super(Wide_ResNet, self).__init__()
         self.in_planes = 16
-        self.extractor = extractor
+        self.drop_dim = drop_dim
+        self.extract = extract
 
         assert ((depth - 4) % 6 == 0), 'Wide-resnet depth should be 6n+4'
         n = (depth - 4) // 6
@@ -89,17 +90,20 @@ class Wide_ResNet(nn.Module):
         out = self.layer2(out)
         out = self.layer3(out)
         out = F.relu(self.bn1(out))
-        out = self.avg_pool(out)
-        if self.extractor:
-            out = out.view(out.size(0), -1)
-        out = self.linear(out)
-        return out
+        x_f = self.avg_pool(out)
+        if self.drop_dim:
+            x_f = x_f.view(x_f.size(0), -1)
+        x_out = self.linear(x_f)
+        if self.extract:
+            return x_out, x_f
+        else:
+            return x_out
 
 
-def wideres(num_classes):
+def wideres(num_classes, drop_dim=True, extract=False):
     """Constructs a wideres-28-10 model without dropout.
     """
-    return Wide_ResNet(28, 10, 0, num_classes)
+    return Wide_ResNet(28, 10, 0, num_classes, drop_dim=drop_dim, extract=extract)
 
 
 # if __name__ == '__main__':

@@ -5,8 +5,8 @@ import torch
 
 __all__ = ['CategoriesSampler']
 
-# torch.manual_seed(2020)
-# torch.cuda.manual_seed(2020)
+# torch.manual_seed(38)
+# torch.cuda.manual_seed(38)
 
 
 class CategoriesSampler(Sampler):

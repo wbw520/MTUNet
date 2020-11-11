@@ -1,53 +1,75 @@
 import torch
-import tools.calculate_tool as cal
+import torch.nn.functional as F
 from tqdm.auto import tqdm
+import tools.calculate_tool as cal
+from torch.autograd import Variable
 
 
-def train_one_epoch(args, model, data_loader, device, record, epoch, optimizer):
-    calculation(args, model, "train", data_loader, device, record, epoch, optimizer)
+def get_metric(metric_type):
+    METRICS = {
+        'cosine': lambda gallery, query: 1. - F.cosine_similarity(query[:, None, :], gallery[None, :, :], dim=2),
+        'euclidean': lambda gallery, query: ((query[:, None, :] - gallery[None, :, :]) ** 2).sum(2),
+        'l1': lambda gallery, query: torch.norm((query[:, None, :] - gallery[None, :, :]), p=1, dim=2),
+        'l2': lambda gallery, query: torch.norm((query[:, None, :] - gallery[None, :, :]), p=2, dim=2),
+    }
+    return METRICS[metric_type]
 
 
-@torch.no_grad()
-def evaluate(args, model, data_loader, device, record, epoch):
-    calculation(args, model, "val", data_loader, device, record, epoch)
+def metric_prediction(gallery, query, train_label, metric_type):
+    gallery = gallery.view(gallery.shape[0], -1)
+    query = query.view(query.shape[0], -1)
+    distance = get_metric(metric_type)(gallery, query)
+    predict = torch.argmin(distance, dim=1)
+    predict = torch.take(train_label, predict)
+    return predict
 
 
-def calculation(args, model, mode, data_loader, device, record, epoch, optimizer=None):
-    if mode == "train":
-        model.train()
-    else:
-        model.eval()
+def train_one_epoch(model, data_loader, device, record, epoch, optimizer, criterion):
+    model.train()
     L = len(data_loader)
     running_loss = 0.0
-    running_corrects = 0.0
-    running_att_loss = 0.0
-    running_log_loss = 0.0
-    print("start " + mode + " :" + str(epoch))
-    if optimizer is not None:
-        print("current learning rate: ", optimizer.param_groups[0]["lr"])
+    running_corrects_1 = 0.0
+    running_corrects_2 = 0.0
+    print("start train: " + str(epoch))
     for i, (inputs, target) in enumerate(tqdm(data_loader)):
         inputs = inputs.to(device, dtype=torch.float32)
         labels = target.to(device, dtype=torch.int64)
 
-        if mode == "train":
-            optimizer.zero_grad()
-        logits, loss_list = model(inputs, labels)
-        loss = loss_list[0]
-        if mode == "train":
-            loss.backward()
-            optimizer.step()
+        optimizer.zero_grad()
+        logits, feature = model(inputs)
+        loss = criterion(logits, labels)
+        loss.backward()
+        optimizer.step()
 
         a = loss.item()
         running_loss += a
-        if len(loss_list) > 2:  # For slot training only
-            running_att_loss += loss_list[2].item()
-            running_log_loss += loss_list[1].item()
-        running_corrects += cal.evaluateTop1(logits, labels)
-    epoch_loss = round(running_loss/L, 3)
-    epoch_loss_log = round(running_log_loss/L, 3)
-    epoch_loss_att = round(running_att_loss/L, 3)
-    epoch_acc = round(running_corrects/L, 3)
-    record[mode]["loss"].append(epoch_loss)
-    record[mode]["acc"].append(epoch_acc)
-    record[mode]["log_loss"].append(epoch_loss_log)
-    record[mode]["att_loss"].append(epoch_loss_att)
+        running_corrects_1 += cal.evaluateTop1(logits, labels)
+        running_corrects_2 += cal.evaluateTop5(logits, labels)
+    record["train"]["loss"].append(round(running_loss/L, 3))
+    record["train"]["acc1"].append(round(running_corrects_1/L, 3))
+    record["train"]["acc5"].append(round(running_corrects_2/L, 3))
+
+
+@torch.no_grad()
+def evaluate(args, model, data_loader, device, record, epoch):
+    model.eval()
+    print("start val: " + str(epoch))
+    running_corrects_1 = 0.0
+    running_acc_95 = []
+    L = len(data_loader)
+    for i, (inputs, target) in enumerate(tqdm(data_loader)):
+        inputs = inputs.to(device, dtype=torch.float32)
+        labels = target.to(device, dtype=torch.int64)
+        logits, feature = model(inputs)
+
+        feature_s = feature[:args.n_way*args.n_shot, :].reshape(args.n_way, args.n_shot, -1).mean(1)
+        feature_q = feature[args.n_way*args.n_shot:, :]
+        labels_support = Variable(torch.arange(0, args.n_way).long().cuda(), requires_grad=False).reshape(-1)
+        labels_query = Variable(torch.arange(0, args.n_way).view(args.n_way, 1).expand(args.n_way, args.query).long().cuda(), requires_grad=False).reshape(-1)
+        prediction = metric_prediction(feature_s, feature_q, labels_support, 'euclidean')
+        acc = (prediction == labels_query).float().mean()
+        running_corrects_1 += acc.item()
+        running_acc_95.append(round(acc.item(), 4))
+    record["val"]["acc1"].append(round(running_corrects_1/L, 3))
+    record["val"]["accm"].append(round(cal.compute_confidence_interval(running_acc_95)[0], 3))
+    record["val"]["accpm"].append(round(cal.compute_confidence_interval(running_acc_95)[1], 3))

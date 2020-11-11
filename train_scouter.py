@@ -6,43 +6,47 @@ import time
 import datetime
 import tools.prepare_things as prt
 from pathlib import Path
-import model.extractor as base_bone
-from engine_base import train_one_epoch, evaluate
-from tools.calculate_tool import MetricLogFew
+from engine_scouter import train_one_epoch, evaluate
+from tools.calculate_tool import MetricLog
 from loaders.base_loader import get_dataloader
+import os
+import numpy as np
 
 
-def main(args):
+def main(args, selection=None):
     device = torch.device(args.device)
-    loaders_train = get_dataloader(args, "train")
-    sample_info_val = [args.val_episodes, args.n_way, args.n_shot, args.query]
-    loaders_val = get_dataloader(args, "val", sample=sample_info_val)
-    criterien = torch.nn.CrossEntropyLoss()
-    model = base_bone.__dict__[args.base_model](num_classes=args.num_classes, drop_dim=True, extract=True)
+    loaders_train = get_dataloader(args, "train", selection=selection, mode="train")
+    loaders_val = get_dataloader(args, "train", selection=selection, mode="val")
+    model = SlotModel(args)
     model.to(device)
     print_param(model)
     params = [p for p in model.parameters() if p.requires_grad]
+    n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print('number of params:', n_parameters)
 
     output_dir = Path(args.output_dir)
+    os.makedirs(output_dir, exist_ok=True)
     optimizer = torch.optim.AdamW(params, lr=args.lr)
+    # optimizer = AdaBelief(params, lr=args.lr)
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.lr_drop)
 
     print("Start training")
     start_time = time.time()
-    log = MetricLogFew(args)
+    log = MetricLog(args)
     record = log.record
+    max_acc = 0
 
-    max_acc1 = 0
     for epoch in range(args.start_epoch, args.epochs):
-        train_one_epoch(model, loaders_train, device, record, epoch, optimizer, criterien)
+        train_one_epoch(args, model, loaders_train, device, record, epoch, optimizer)
         evaluate(args, model, loaders_val, device, record, epoch)
         lr_scheduler.step()
 
         if args.output_dir:
-            checkpoint_paths = [output_dir / (f"{args.dataset}_" + f"{args.base_model}_" + f"{'use_slot_' if args.use_slot else 'no_slot_'}" + 'checkpoint.pth')]
-            if record["val"]["accm"][epoch-1] > max_acc1:
+            checkpoint_paths = [output_dir / (f"{args.dataset}_" + f"{args.base_model}_" + f"{'use_slot_' if args.use_slot else 'no_slot_'}"
+                                              + f"{args.num_slot if args.use_slot else ''}" + 'checkpoint.pth')]
+            if record["val"]["acc"][epoch-1] > max_acc:
                 print("get higher acc save current model")
-                max_acc1 = record["val"]["accm"][epoch-1]
+                max_acc = record["val"]["acc"][epoch-1]
                 for checkpoint_path in checkpoint_paths:
                     prt.save_on_master({
                         'model': model.state_dict(),
@@ -61,9 +65,17 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('model training and evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
-    args.fsl = True
-    args.lr_drop = 30
+    args.fsl = False
+    args.lr_drop = 40
     args.epochs = 80
-    args.batch_size = 64
-    args.use_slot = False
-    main(args)
+    args.batch_size = 128
+    args.use_slot = True
+    args.slot_base_train = True
+    args.drop_dim = False
+    args.lr = 0.0001
+    print("start base scouter model training: ")
+    selection = np.arange(0, 64, 10)
+    print(selection)
+    args.num_slot = len(selection)
+    main(args, selection=selection)
+

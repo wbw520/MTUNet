@@ -5,7 +5,11 @@ import loaders.datasets as datasets
 
 def get_dataloader(args, split, shuffle=True, out_name=False, sample=None, selection=None, mode=None):
     # sample: iter, way, shot, query
-    transform = datasets.make_transform(args, split)
+    if args.fsl:
+        ts_condition = split
+    else:
+        ts_condition = mode
+    transform = datasets.make_transform(args, ts_condition)
     sets = datasets.DatasetFolder(args.data_root, args.dataset, split, transform, out_name=out_name, cls_selction=selection, mode=mode)
     if sample is not None:
         sampler = datasets.CategoriesSampler(sets.labels, *sample)

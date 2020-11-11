@@ -59,12 +59,13 @@ class DenseNet(nn.Module):
     """
 
     def __init__(self, growth_rate=32, block_config=(6, 12, 24, 16),
-                 num_init_features=64, bn_size=4, drop_rate=0, num_classes=1000, extractor=False):
+                 num_init_features=64, bn_size=4, drop_rate=0, num_classes=1000, drop_dim=True, extract=False):
 
         super(DenseNet, self).__init__()
 
         # First convolution
-        self.extractor = extractor
+        self.drop_dim = drop_dim
+        self.extract = extract
         self.features = nn.Sequential(OrderedDict([
             ('conv0', nn.Conv2d(3, num_init_features, kernel_size=3, stride=1, padding=1, bias=False)),
         ]))
@@ -101,11 +102,14 @@ class DenseNet(nn.Module):
     def forward(self, x):
         features = self.features(x)
         out = F.relu(features, inplace=True)
-        out = self.avg_pool(out)
-        if self.extractor:
-            out = out.view(out.size(0), -1)
-        out = self.linear(out)
-        return out
+        x_f = self.avg_pool(out)
+        if self.drop_dim:
+            x_f = x_f.view(x_f.size(0), -1)
+        x_out = self.linear(x_f)
+        if self.extract:
+            return x_out, x_f
+        else:
+            return x_out
 
 
 def densenet121(**kwargs):
