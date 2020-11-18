@@ -10,7 +10,7 @@ Download tieredImageNet from [tiered-ImageNet](https://drive.google.com/file/d/1
 
 Download cifarFS from [cifarFS](https://drive.google.com/file/d/1pTsCCMDj45kzFYgrnO67BWVbKs48Q3NI/view)
 
-set all dataset under "../FSL_data", for the same split setting run the following command:
+Put all dataset under "../FSL_data", for the same split setting run the following command:
 
 ```
 python data/tiered_imagenet.py --data "../FSL_data/tiered-imagenet/"
