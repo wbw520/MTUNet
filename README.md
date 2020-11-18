@@ -13,12 +13,10 @@ Download cifarFS from [cifarFS](https://drive.google.com/file/d/1pTsCCMDj45kzFYg
 set all dataset under "../FSL_data", for the same split setting run the following command:
 
 ```
-python data/tiered_imagenet.py --data ".../FSL_data/tiered-imagenet/"
-python data/cifarfs.py --data ".../FSL_data/tiered-imagenet/"
+python data/tiered_imagenet.py --data "../FSL_data/tiered-imagenet/"
+python data/cifarfs.py --data "../FSL_data/cifar100/" --split "../FSL_data""
 
 ```
-
-
 
 ##### Training for backbone
 ```

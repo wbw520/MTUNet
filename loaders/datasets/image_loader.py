@@ -71,7 +71,7 @@ class DatasetFolder(object):
         elif self.set_name == "tiered-ImageNet":
             folder_name = ""
             img_name = self.data[index]
-        elif self.set_name == "cifar100":
+        elif self.set_name == "cifarfs":
             folder_name = ""
             img_name = self.data[index]
         else:

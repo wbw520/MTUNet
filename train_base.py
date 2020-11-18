@@ -45,7 +45,7 @@ def main(args):
         lr_scheduler.step()
 
         if args.output_dir:
-            checkpoint_paths = [output_dir / (f"{args.dataset}_" + f"{args.base_model}_" + f"{'use_slot_' if args.use_slot else 'no_slot_'}" + 'checkpoint.pth')]
+            checkpoint_paths = [output_dir / model_name]
             if record["val"]["accm"][epoch-1] > max_acc1:
                 print("get higher acc save current model")
                 max_acc1 = record["val"]["accm"][epoch-1]
@@ -72,4 +72,6 @@ if __name__ == '__main__':
     args.epochs = 50
     args.batch_size = 256
     args.use_slot = False
+    model_name = (f"{args.dataset}_" + f"{args.base_model}_" + f"{'use_slot_' if args.use_slot else 'no_slot_'}" + 'checkpoint.pth')
+    print("model name: ", model_name)
     main(args)

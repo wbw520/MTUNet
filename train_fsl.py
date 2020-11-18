@@ -48,7 +48,7 @@ def main(args):
         lr_scheduler.step()
 
         if args.output_dir:
-            checkpoint_paths = [output_dir / (f"{args.dataset}_{args.base_model}_slot{args.num_slot}_" + 'fsl_checkpoint.pth')]
+            checkpoint_paths = [output_dir / model_name]
             if record["val"]["accm"][epoch-1] > max_acc:
                 print("get higher acc save current model")
                 max_acc = record["val"]["accm"][epoch-1]
@@ -78,5 +78,6 @@ if __name__ == '__main__':
         selection = np.arange(0, args.num_classes, args.interval)
     print(selection)
     args.num_slot = len(selection)
-    print("xSlot num: ", args.num_slot)
+    model_name = (f"{args.dataset}_{args.base_model}_slot{args.num_slot}_" + 'fsl_checkpoint.pth')
+    print("patterns num: ", args.num_slot)
     main(args)

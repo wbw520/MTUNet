@@ -43,8 +43,7 @@ def main(args, selection=None):
         lr_scheduler.step()
 
         if args.output_dir:
-            checkpoint_paths = [output_dir / (f"{args.dataset}_" + f"{args.base_model}_" + f"{'use_slot_' if args.use_slot else 'no_slot_'}"
-                                              + f"{args.num_slot if args.use_slot else ''}" + 'checkpoint.pth')]
+            checkpoint_paths = [output_dir / model_name]
             if record["val"]["acc"][epoch-1] > max_acc:
                 print("get higher acc save current model")
                 max_acc = record["val"]["acc"][epoch-1]
@@ -74,12 +73,15 @@ if __name__ == '__main__':
     args.slot_base_train = True
     args.drop_dim = False
     args.lr = 0.0001
+    model_name = (f"{args.dataset}_" + f"{args.base_model}_" + f"{'use_slot_' if args.use_slot else 'no_slot_'}"
+                  + f"{args.num_slot if args.use_slot else ''}" + 'checkpoint.pth')
     if args.random:
         selection = np.random.randint(0, args.num_classes, args.num_slot)
     else:
         selection = np.arange(0, args.num_classes, args.interval)
     print(selection)
     args.num_slot = len(selection)
-    print("xSlot num: ", args.num_slot)
+    print("patterns num: ", args.num_slot)
+    print("model name: ", model_name)
     main(args, selection=selection)
 

@@ -51,7 +51,7 @@ if __name__ == '__main__':
             if 'train' in name:
                 shutil.copy(prex2+name, root_folder_train + "/" + name)
                 label = name.split('.')[0].split('_')[-2]
-                f.write('{},{}\n'.format(name, label))
+                # f.write('{},{}\n'.format(name, label))
 
     root_folder_val = os.path.join(prex1, "val")
     os.mkdir(root_folder_val)
@@ -61,7 +61,7 @@ if __name__ == '__main__':
             if 'val' in name:
                 shutil.copy(prex2+name, root_folder_val + "/" + name)
                 label = name.split('.')[0].split('_')[-2]
-                f.write('{},{}\n'.format(name, label))
+                # f.write('{},{}\n'.format(name, label))
 
     root_folder_test = os.path.join(prex1, "test")
     os.mkdir(root_folder_test)
@@ -71,4 +71,4 @@ if __name__ == '__main__':
             if 'test' in name:
                 shutil.copy(prex2+name, root_folder_test + "/" + name)
                 label = name.split('.')[0].split('_')[-2]
-                f.write('{},{}\n'.format(name, label))
+                # f.write('{},{}\n'.format(name, label))
