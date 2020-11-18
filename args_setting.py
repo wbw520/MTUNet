@@ -5,7 +5,7 @@ def get_args_parser():
     parser = argparse.ArgumentParser('FSL Project', add_help=False)
 
     # dataset setting
-    parser.add_argument('--dataset', default="cifarfs", type=str)
+    parser.add_argument('--dataset', default="miniImageNet", type=str)
     parser.add_argument('--data_root', default="/home/wbw/PAN/FSL_data", type=str)
 
     # model setting
