@@ -50,7 +50,7 @@ python train_fsl.py --random False --interval 10 --dataset cifarfs --base_model 
 
 ##### Test MTUNet
 ```
-python test.py --random False --interval 10 --dataset miniImageNet --base_model resnet18 --channel 512 --num_classes 64 --data_root "../FSL_data"
+python test_fsl.py --random False --interval 10 --dataset miniImageNet --base_model resnet18 --channel 512 --num_classes 64 --data_root "../FSL_data"
 ```
 
 ##### Visualization of MTUNet
