@@ -8,7 +8,7 @@ Download miniImageNet from [miniImageNet](https://drive.google.com/open?id=0B3Ir
 
 Download tieredImageNet from [tiered-ImageNet](https://drive.google.com/file/d/1g1aIDy2Ar_MViF2gDXFYDBTR-HYecV07/view)
 
-Download cifarFS from [cifarFS](https://drive.google.com/file/d/1pTsCCMDj45kzFYgrnO67BWVbKs48Q3NI/view)
+Download cifarFS from [cifarfs](https://drive.google.com/file/d/1pTsCCMDj45kzFYgrnO67BWVbKs48Q3NI/view)
 
 Put all dataset under "../FSL_data", for the same split setting run the following command:
 
@@ -24,8 +24,8 @@ python train_base.py --dataset miniImageNet --base_model resnet18 --channel 512 
 python train_base.py --dataset miniImageNet --base_model wideres --channel 640 --num_classes 64 --data_root "../FSL_data"
 python train_base.py --dataset tiered-ImageNet --base_model resnet18 --channel 512 --num_classes 351 --data_root "../FSL_data"
 python train_base.py --dataset tiered-ImageNet --base_model wideres --channel 640 --num_classes 351 --data_root "../FSL_data"
-python train_base.py --dataset cifar100 --base_model resnet18 --channel 512 --num_classes 64 --data_root "../FSL_data"
-python train_base.py --dataset cifar100 --base_model wideres --channel 640 --num_classes 64 --data_root "../FSL_data"
+python train_base.py --dataset cifarfs --base_model resnet18 --channel 512 --num_classes 64 --data_root "../FSL_data"
+python train_base.py --dataset cifarfs --base_model wideres --channel 640 --num_classes 64 --data_root "../FSL_data"
 ```
 
 ##### Training for patterns
