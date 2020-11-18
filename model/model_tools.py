@@ -23,6 +23,7 @@ def fix_parameter(model, name_fix, mode="open"):
 
 def print_param(model):
     # show name of parameter could be trained in model
+    print("Trainable parameters: ")
     for name, param in model.named_parameters():
         if param.requires_grad:
             print(name)

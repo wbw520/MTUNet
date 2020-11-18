@@ -5,7 +5,7 @@ def get_args_parser():
     parser = argparse.ArgumentParser('FSL Project', add_help=False)
 
     # dataset setting
-    parser.add_argument('--dataset', default="miniImageNet", type=str)
+    parser.add_argument('--dataset', default="cifarfs", type=str)
     parser.add_argument('--data_root', default="/home/wbw/PAN/FSL_data", type=str)
 
     # model setting
@@ -18,7 +18,7 @@ def get_args_parser():
     parser.add_argument('--n_shot', default=1, type=int)
     parser.add_argument('--query', default=15, type=int)
 
-    parser.add_argument('--train_episodes', default=1000, type=int)
+    parser.add_argument('--train_episodes', default=500, type=int)
     parser.add_argument('--val_episodes', default=2000, type=int)
     parser.add_argument('--test_episodes', default=10000, type=int)
 
