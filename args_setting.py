@@ -5,7 +5,7 @@ def get_args_parser():
     parser = argparse.ArgumentParser('FSL Project', add_help=False)
 
     # dataset setting
-    parser.add_argument('--dataset', default="miniImageNet", type=str)
+    parser.add_argument('--dataset', default="cifarfs", type=str)
     parser.add_argument('--data_root', default="/home/wbw/PAN/FSL_data", type=str)
 
     # model setting
@@ -20,7 +20,7 @@ def get_args_parser():
 
     parser.add_argument('--train_episodes', default=1000, type=int)
     parser.add_argument('--val_episodes', default=2000, type=int)
-    parser.add_argument('--test_episodes', default=2000, type=int)
+    parser.add_argument('--test_episodes', default=10000, type=int)
 
     # train setting
     parser.add_argument('--fsl', default=True, type=bool, help='whether fsl model')
@@ -49,7 +49,7 @@ def get_args_parser():
     parser.add_argument('--vis', default=False, type=bool, help='whether save slot visualization')
     parser.add_argument('--vis_id', default=0, type=int, help='choose image to visualization')
     parser.add_argument('--DT', default=True, type=bool, help='DT training')
-    parser.add_argument('--random', default=True, type=bool, help='whether random select category')
+    parser.add_argument('--random', default=False, type=bool, help='whether random select category')
 
     # data/machine set
     parser.add_argument('--device', default='cuda',

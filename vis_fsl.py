@@ -70,7 +70,7 @@ def apply_colormap_on_image(org_im, activation, colormap_name):
 
 def main():
     model = FSLSimilarity(args)
-    model_name = "scouter_FSL_our1_14.pth"
+    model_name = saved_name
     checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
     model.load_state_dict(checkpoint["model"])
     model.to(device)
@@ -87,13 +87,18 @@ def main():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('model test script', parents=[get_args_parser()])
     args = parser.parse_args()
-    args.num_slot = 7
+    if args.random:
+        selection = np.random.randint(0, args.num_classes, args.num_slot)
+    else:
+        selection = np.arange(0, args.num_classes, args.interval)
+    print(selection)
+    args.num_slot = len(selection)
     args.query = 1
     args.vis = True
     args.fsl = True
     args.slot_base_train = False
-    seed = 21
-    args.dataset = "miniImageNet"
+    saved_name = (f"{args.dataset}_{args.base_model}_slot{args.num_slot}_" + 'fsl_checkpoint.pth')
+    seed = None
     device = torch.device(args.device)
     criterion = SimilarityLoss(args).to(device)
     main()

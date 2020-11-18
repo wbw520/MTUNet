@@ -54,7 +54,15 @@ if __name__ == '__main__':
     args = parser.parse_args()
     device = torch.device(args.device)
     args.slot_base_train = False
-    for i in range(0, 1):
-        pp = "selction" + str(i+1) + "_cifar100_resnet18_slot7_fsl_checkpoint.pth"
-        main(pp)
-        print(record)
+    if args.random:
+        selection = np.random.randint(0, args.num_classes, args.num_slot)
+    else:
+        selection = np.arange(0, args.num_classes, args.interval)
+    print(selection)
+    args.num_slot = len(selection)
+    model_name = (f"{args.dataset}_{args.base_model}_slot{args.num_slot}_" + 'fsl_checkpoint.pth')
+    main(model_name)
+    # for i in range(0, 1):
+    #     pp = "selction" + str(i+1) + "_cifar100_resnet18_slot7_fsl_checkpoint.pth"
+    #     main(pp)
+    #     print(record)

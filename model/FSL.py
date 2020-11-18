@@ -138,6 +138,7 @@ class SimilarityLoss(nn.Module):
 
     def forward(self, out_fc, att_loss):
         if self.args.vis:
+            print("matching matrix:  ")
             print(np.round(out_fc.cpu().detach().numpy(), decimals=2))
         labels_query = Variable(torch.arange(0, self.args.n_way).view(self.args.n_way, 1).expand(self.args.n_way, self.args.query).long().cuda(), requires_grad=False).reshape(-1)
         labels_query_onehot = torch.zeros(labels_query.size()+(5,), dtype=labels_query.dtype).to(labels_query.device)
