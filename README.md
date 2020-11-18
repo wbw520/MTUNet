@@ -19,7 +19,7 @@ python data/cifarfs.py --data "../FSL_data/cifar100/" --split "../FSL_data""
 ```
 
 
-MTUNet training follow by three step. All training default as 5-way 1-shot 15-query.
+MTUNet training follow by three steps. All training default as 5-way 1-shot 15-query.
 ##### Training for backbone
 ```
 python train_base.py --dataset miniImageNet --base_model resnet18 --channel 512 --num_classes 64 --data_root "../FSL_data"
