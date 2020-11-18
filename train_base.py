@@ -1,6 +1,7 @@
 from args_setting import *
 from model.scouter.scouter_model import SlotModel
 from tools.Adabelif import AdaBelief
+import os
 from model.model_tools import print_param
 import torch
 import time
@@ -11,6 +12,9 @@ import model.extractor as base_bone
 from engine_base import train_one_epoch, evaluate
 from tools.calculate_tool import MetricLogFew
 from loaders.base_loader import get_dataloader
+
+
+os.makedirs('saved_model/', exist_ok=True)
 
 
 def main(args):

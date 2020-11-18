@@ -22,7 +22,7 @@ def main(args):
     criterien = SimilarityLoss(args).to(device)
     model = FSLSimilarity(args)
 
-    model_name = f"selction{sss}_{args.dataset}_{args.base_model}_use_slot_{args.num_slot}checkpoint.pth"
+    model_name = f"{args.dataset}_{args.base_model}_use_slot_{args.num_slot}checkpoint.pth"
     model.to(device)
     checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
     model.load_state_dict(checkpoint["model"], strict=False)
@@ -48,7 +48,7 @@ def main(args):
         lr_scheduler.step()
 
         if args.output_dir:
-            checkpoint_paths = [output_dir / (f"selction{sss}_{args.dataset}_{args.base_model}_slot{args.num_slot}_" + 'fsl_checkpoint.pth')]
+            checkpoint_paths = [output_dir / (f"{args.dataset}_{args.base_model}_slot{args.num_slot}_" + 'fsl_checkpoint.pth')]
             if record["val"]["accm"][epoch-1] > max_acc:
                 print("get higher acc save current model")
                 max_acc = record["val"]["accm"][epoch-1]
@@ -62,7 +62,6 @@ def main(args):
                     }, checkpoint_path)
         log.print_metric()
 
-    oveall_record.append(max_acc)
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print('Training time {}'.format(total_time_str))
@@ -72,21 +71,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('model training and evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
     args.slot_base_train = False
-    args.n_shot = 1
-    oveall_record = []
-    for p in range(1, 50):
-        print("start base scouter model training: ", p+1)
-        sss = p+1
-        # selection = np.arange(0, 64, 10)
-        np.random.seed(p+1)
-        selection = np.random.randint(0, 64, 7)
-        print(selection)
-        print(len(selection))
-        args.num_slot = len(selection)
-        main(args)
-        print(oveall_record)
-    # selection = np.arange(0, 64, 7)
-    # print(selection)
-    # args.num_slot = len(selection)
-    # print("xSlot num: ", args.num_slot)
-    # main(args)
+    if args.random:
+        selection = np.random.randint(0, 64, args.num_slot)
+    else:
+        selection = np.arange(0, 64, 10)
+    print(selection)
+    args.num_slot = len(selection)
+    print("xSlot num: ", args.num_slot)
+    main(args)

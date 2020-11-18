@@ -18,7 +18,7 @@ def get_args_parser():
     parser.add_argument('--n_shot', default=1, type=int)
     parser.add_argument('--query', default=15, type=int)
 
-    parser.add_argument('--train_episodes', default=500, type=int)
+    parser.add_argument('--train_episodes', default=1000, type=int)
     parser.add_argument('--val_episodes', default=2000, type=int)
     parser.add_argument('--test_episodes', default=2000, type=int)
 
@@ -48,6 +48,7 @@ def get_args_parser():
     parser.add_argument('--vis', default=False, type=bool, help='whether save slot visualization')
     parser.add_argument('--vis_id', default=0, type=int, help='choose image to visualization')
     parser.add_argument('--DT', default=True, type=bool, help='DT training')
+    parser.add_argument('--random', default=True, type=bool, help='whether random select category')
 
     # data/machine set
     parser.add_argument('--device', default='cuda',
