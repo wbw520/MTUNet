@@ -28,6 +28,7 @@ def save_imgs(prex1, prex2, tag):
 
 
 if __name__ == '__main__':
+    print("hehe")
     print("extract images")
     prex1 = args.data
     prex2 = prex1 + 'data/'

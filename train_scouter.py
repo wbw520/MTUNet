@@ -75,9 +75,9 @@ if __name__ == '__main__':
     args.drop_dim = False
     args.lr = 0.0001
     if args.random:
-        selection = np.random.randint(0, 64, args.num_slot)
+        selection = np.random.randint(0, args.num_classes, args.num_slot)
     else:
-        selection = np.arange(0, 64, 10)
+        selection = np.arange(0, args.num_classes, args.interval)
     print(selection)
     args.num_slot = len(selection)
     print("xSlot num: ", args.num_slot)

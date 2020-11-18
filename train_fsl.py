@@ -71,10 +71,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('model training and evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
     args.slot_base_train = False
+    args.fsl = True
     if args.random:
-        selection = np.random.randint(0, 64, args.num_slot)
+        selection = np.random.randint(0, args.num_classes, args.num_slot)
     else:
-        selection = np.arange(0, 64, 10)
+        selection = np.arange(0, args.num_classes, args.interval)
     print(selection)
     args.num_slot = len(selection)
     print("xSlot num: ", args.num_slot)

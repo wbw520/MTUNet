@@ -23,7 +23,7 @@ def get_args_parser():
     parser.add_argument('--test_episodes', default=2000, type=int)
 
     # train setting
-    parser.add_argument('--fsl', default=True, type=bool, help='whether train backbone')
+    parser.add_argument('--fsl', default=True, type=bool, help='whether fsl model')
     parser.add_argument('--lr', default=0.001, type=float)
     parser.add_argument('--lr_drop', default=10, type=int)
     parser.add_argument('--batch_size', default=256, type=int)
@@ -36,6 +36,7 @@ def get_args_parser():
 
     # slot setting
     parser.add_argument('--num_slot', default=7, type=int, help='number of slot')
+    parser.add_argument('--interval', default=10, type=int, help='skip applied in category sampling')
     parser.add_argument('--drop_dim', default=False, type=bool, help='drop dim for avg')
     parser.add_argument('--slot_base_train', default=True, type=bool, help='drop dim for avg')
     parser.add_argument('--use_pre', default=True, type=bool, help='whether use pre parameter for backbone')
