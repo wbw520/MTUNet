@@ -18,6 +18,8 @@ python data/cifarfs.py --data "../FSL_data/cifar100/" --split "../FSL_data""
 
 ```
 
+
+MTUNet training follow by three step.
 ##### Training for backbone
 ```
 python train_base.py --dataset miniImageNet --base_model resnet18 --channel 512 --num_classes 64 --data_root "../FSL_data"
