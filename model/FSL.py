@@ -51,9 +51,8 @@ class FSLSimilarity(nn.Module):
                                         nn.Linear(2048, 1),
                                         nn.Sigmoid(),
         )
-        self.use_affine = False
         self.use_threshold = False
-        self.u_vis = False
+        self.u_vis =args.vis
 
     def forward(self, x):
         x_pe, x, x_raw = self.feature_deal(x)
@@ -73,13 +72,13 @@ class FSLSimilarity(nn.Module):
             attn_support = self.threshold(attn_support)
             attn_query = self.threshold(attn_query)
 
-        if self.use_affine:
+        if self.u_vis:
             self.vis(attn_support, "origin_support", self.u_vis)
-            attn_support = self.affine(attn_support)
-            self.vis(attn_support, "affined_support", self.u_vis)
+            # attn_support = self.affine(attn_support)
+            # self.vis(attn_support, "affined_support", self.u_vis)
             self.vis(attn_query, "origin_query", self.u_vis)
-            attn_query = self.affine(attn_query)
-            self.vis(attn_query, "affined_query", self.u_vis)
+            # attn_query = self.affine(attn_query)
+            # self.vis(attn_query, "affined_query", self.u_vis)
 
         weighted_support = torch.mean(attn_support*(x_raw_support.reshape(self.args.n_way*self.args.n_shot, dim, size, size)), dim=(2, 3))
         weighted_query = torch.mean(attn_query*(x_raw_query.reshape(self.args.n_way*self.args.query, dim, size, size)), dim=(2, 3))
@@ -117,7 +116,7 @@ class FSLSimilarity(nn.Module):
             att_vis = ((att_vis - att_vis.min()) / (att_vis.max()-att_vis.min()) * 255.)
             att_vis = (att_vis.squeeze(0).cpu().detach().numpy()).astype(np.uint8)
             image = Image.fromarray(att_vis, mode='L').resize((self.args.img_size, self.args.img_size), resample=Image.BILINEAR)
-            image.save(f'vis/affine/{name}_{i}.png')
+            image.save(f'vis/all/{name}_{i}.png')
 
     def affine(self, data):
         data = data.permute((0, 2, 3, 1)).cpu().detach().numpy()
@@ -138,6 +137,8 @@ class SimilarityLoss(nn.Module):
         return torch.gather(input, 3, max)
 
     def forward(self, out_fc, att_loss):
+        if self.args.vis:
+            print(np.round(out_fc.cpu().detach().numpy(), decimals=2))
         labels_query = Variable(torch.arange(0, self.args.n_way).view(self.args.n_way, 1).expand(self.args.n_way, self.args.query).long().cuda(), requires_grad=False).reshape(-1)
         labels_query_onehot = torch.zeros(labels_query.size()+(5,), dtype=labels_query.dtype).to(labels_query.device)
         labels_query_onehot.scatter_(-1, labels_query.unsqueeze(-1), 1)

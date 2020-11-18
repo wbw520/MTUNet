@@ -11,7 +11,7 @@ import os
 
 os.makedirs('vis/', exist_ok=True)
 os.makedirs('vis/att', exist_ok=True)
-os.makedirs('vis/affine', exist_ok=True)
+os.makedirs('vis/all', exist_ok=True)
 
 
 def test(args, model, image, record_name):
@@ -34,13 +34,14 @@ def test(args, model, image, record_name):
         else:
             affine_name = "query"
             index = i - args.n_shot*args.n_way
-        sum_slot = np.array(Image.open(f'vis/affine/affined_{affine_name}_{index}.png'), dtype=np.uint8)
-        heatmap_only, heatmap_on_image = apply_colormap_on_image(image_raw, sum_slot, 'jet')
-        heatmap_on_image.save("vis/affine/" + f'colored_affined_{affine_name}_{index}.png')
 
-        sum_slot = np.array(Image.open(f'vis/affine/origin_{affine_name}_{index}.png'), dtype=np.uint8)
+        # sum_slot = np.array(Image.open(f'vis/affine/affined_{affine_name}_{index}.png'), dtype=np.uint8)
+        # heatmap_only, heatmap_on_image = apply_colormap_on_image(image_raw, sum_slot, 'jet')
+        # heatmap_on_image.save("vis/affine/" + f'colored_affined_{affine_name}_{index}.png')
+
+        sum_slot = np.array(Image.open(f'vis/all/origin_{affine_name}_{index}.png'), dtype=np.uint8)
         heatmap_only, heatmap_on_image = apply_colormap_on_image(image_raw, sum_slot, 'jet')
-        heatmap_on_image.save("vis/affine/" + f'colored_origin_{affine_name}_{index}.png')
+        heatmap_on_image.save("vis/all/" + f'colored_origin_{affine_name}_{index}.png')
 
 
 def apply_colormap_on_image(org_im, activation, colormap_name):
@@ -75,7 +76,7 @@ def main():
     model.to(device)
     model.eval()
     sample_info_val = [args.val_episodes, args.n_way, args.n_shot, args.query]
-    dataset_val = get_dataloader(args, "val", sample=sample_info_val, out_name=True)
+    dataset_val = get_dataloader(args, "val", sample=sample_info_val, out_name=True, seed=seed)
     data = iter(dataset_val).next()
 
     imgs, labels, img_name = data
@@ -91,6 +92,8 @@ if __name__ == '__main__':
     args.vis = True
     args.fsl = True
     args.slot_base_train = False
+    seed = 21
+    args.dataset = "miniImageNet"
     device = torch.device(args.device)
     criterion = SimilarityLoss(args).to(device)
     main()

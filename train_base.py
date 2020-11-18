@@ -1,5 +1,6 @@
 from args_setting import *
 from model.scouter.scouter_model import SlotModel
+from tools.Adabelif import AdaBelief
 from model.model_tools import print_param
 import torch
 import time
@@ -24,6 +25,7 @@ def main(args):
     params = [p for p in model.parameters() if p.requires_grad]
 
     output_dir = Path(args.output_dir)
+    # optimizer = AdaBelief(params, lr=args.lr)
     optimizer = torch.optim.AdamW(params, lr=args.lr)
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.lr_drop)
 
@@ -62,8 +64,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('model training and evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
     args.fsl = True
-    args.lr_drop = 30
-    args.epochs = 80
-    args.batch_size = 64
+    args.lr_drop = 20
+    args.epochs = 50
+    args.batch_size = 256
     args.use_slot = False
     main(args)

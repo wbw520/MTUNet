@@ -29,15 +29,16 @@ def evaluate(model, data_loader, device, criterion):
         running_att_loss += att_loss.item()
         running_acc_95.append(round(acc.item(), 4))
 
+    record.append(round(cal.compute_confidence_interval(running_acc_95)[0], 4))
     print("loss: ", round(running_loss/L, 3))
     print("acc_95: ", round(cal.compute_confidence_interval(running_acc_95)[0], 4))
     print("interval: ", round(cal.compute_confidence_interval(running_acc_95)[1], 4))
 
 
-def main():
+def main(name):
     criterien = SimilarityLoss(args)
     model = FSLSimilarity(args)
-    model_name = "scouter_FSL_our1_14.pth"
+    model_name = name
     checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
     model.load_state_dict(checkpoint["model"])
     model.to(device)
@@ -48,8 +49,12 @@ def main():
 
 
 if __name__ == '__main__':
+    record = []
     parser = argparse.ArgumentParser('model test script', parents=[get_args_parser()])
     args = parser.parse_args()
     device = torch.device(args.device)
     args.slot_base_train = False
-    main()
+    for i in range(0, 1):
+        pp = "selction" + str(i+1) + "_cifar100_resnet18_slot7_fsl_checkpoint.pth"
+        main(pp)
+        print(record)

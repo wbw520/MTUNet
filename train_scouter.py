@@ -10,6 +10,7 @@ from engine_scouter import train_one_epoch, evaluate
 from tools.calculate_tool import MetricLog
 from loaders.base_loader import get_dataloader
 import os
+from tools.Adabelif import AdaBelief
 import numpy as np
 
 
@@ -42,7 +43,7 @@ def main(args, selection=None):
         lr_scheduler.step()
 
         if args.output_dir:
-            checkpoint_paths = [output_dir / (f"{args.dataset}_" + f"{args.base_model}_" + f"{'use_slot_' if args.use_slot else 'no_slot_'}"
+            checkpoint_paths = [output_dir / (f"selction{sss}_{args.dataset}_" + f"{args.base_model}_" + f"{'use_slot_' if args.use_slot else 'no_slot_'}"
                                               + f"{args.num_slot if args.use_slot else ''}" + 'checkpoint.pth')]
             if record["val"]["acc"][epoch-1] > max_acc:
                 print("get higher acc save current model")
@@ -57,6 +58,7 @@ def main(args, selection=None):
                     }, checkpoint_path)
         log.print_metric()
 
+    oveall_record.append(max_acc)
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
     print('Training time {}'.format(total_time_str))
@@ -67,15 +69,22 @@ if __name__ == '__main__':
     args = parser.parse_args()
     args.fsl = False
     args.lr_drop = 40
-    args.epochs = 80
+    args.epochs = 60
     args.batch_size = 128
     args.use_slot = True
     args.slot_base_train = True
     args.drop_dim = False
     args.lr = 0.0001
-    print("start base scouter model training: ")
-    selection = np.arange(0, 64, 10)
-    print(selection)
-    args.num_slot = len(selection)
-    main(args, selection=selection)
+    oveall_record = []
+    for p in range(0, 50):
+        print("start base scouter model training: ", p+1)
+        sss = p+1
+        selection = np.arange(0, 64, 10)
+        np.random.seed(p+1)
+        # selection = np.random.randint(0, 64, 7)
+        print(selection)
+        print(len(selection))
+        args.num_slot = len(selection)
+        main(args, selection=selection)
+        print(oveall_record)
 

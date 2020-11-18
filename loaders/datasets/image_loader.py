@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import PIL.Image as Image
 from sklearn.model_selection import train_test_split
+import numpy as np
 
 __all__ = ['DatasetFolder']
 
@@ -11,9 +12,11 @@ class DatasetFolder(object):
     def __init__(self, root, set_name, split_type, transform, out_name=False, cls_selction=None, mode=None):
         assert split_type in ['train', 'test', 'val']
         split_file = os.path.join("data/data_split", set_name, split_type + '.csv')
+        print(split_file)
         assert os.path.isfile(split_file)
         data = self.read_csv(split_file)
         cls = list(data.keys())
+        print(len(cls))
 
         data_new, cls_new = self.select_class(data, cls, cls_selction)
         if mode is not None:
@@ -23,6 +26,7 @@ class DatasetFolder(object):
             else:
                 data_new = val
         self.data, self.labels = [x[0] for x in data_new], [cls_new.index(x[1]) for x in data_new]
+        # print(len(np.unique(self.labels)))
         self.split_type = split_type
         self.set_name = set_name
         self.root = root + "/" + set_name
@@ -64,9 +68,15 @@ class DatasetFolder(object):
             img_name = self.data[index]
         elif self.set_name == "CUB200":
             folder_name, img_name = self.data[index].split("/")
-        elif self.set_name == "tiredImageNet":
+        elif self.set_name == "tiered-ImageNet":
             folder_name = ""
             img_name = self.data[index]
+        elif self.set_name == "cifar100":
+            folder_name = ""
+            img_name = self.data[index]
+        else:
+            print("not a valid dataset name")
+            raise
         img_root = os.path.join(self.root, self.split_type, folder_name, img_name)
         assert os.path.isfile(img_root)
         img = Image.open(img_root).convert('RGB')

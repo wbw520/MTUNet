@@ -5,18 +5,16 @@ import torch
 
 __all__ = ['CategoriesSampler']
 
-# torch.manual_seed(38)
-# torch.cuda.manual_seed(38)
-
 
 class CategoriesSampler(Sampler):
 
-    def __init__(self, label, n_iter, n_way, n_shot, n_query):
+    def __init__(self, label, n_iter, n_way, n_shot, n_query, seed=None):
 
         self.n_iter = n_iter
         self.n_way = n_way
         self.n_shot = n_shot
         self.n_query = n_query
+        self.seed = seed
 
         label = np.array(label)
         self.m_ind = []
@@ -34,7 +32,12 @@ class CategoriesSampler(Sampler):
         for i in range(self.n_iter):
             batch_gallery = []
             batch_query = []
+            if self.seed:
+                torch.manual_seed(self.seed)
+                torch.cuda.manual_seed(self.seed)
             classes = torch.randperm(len(self.m_ind))[:self.n_way]
+            if self.seed:
+                print(classes)
             for c in classes:
                 l = self.m_ind[c.item()]
                 pos = torch.randperm(l.size()[0])

@@ -43,6 +43,7 @@ class MetricLog():
         print("val CE loss", self.record["val"]["log_loss"])
         print("train attention loss", self.record["train"]["att_loss"])
         print("val attention loss", self.record["val"]["att_loss"])
+        return self.record
 
 
 class MetricLogSimilar():
