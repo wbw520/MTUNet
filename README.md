@@ -81,7 +81,6 @@ python vis_fsl.py --random False --interval 10 --dataset miniImageNet --base_mod
 
 #### Matching matrix
 <img src="figs/matrix.png" width="400" height="400" alt="matrix">
-![Matching matrix](figs/matrix.png )
 
 ## Publication
 If you want to use this work, please consider citing the following paper.
