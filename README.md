@@ -80,6 +80,7 @@ python vis_fsl.py --random False --interval 10 --dataset miniImageNet --base_mod
 ![Patterns visualization](figs/patterns.png)
 
 #### Matching matrix
+<img src="figs/matrix.png" width="400" height="400" alt="matrix">
 ![Matching matrix](figs/matrix.png )
 
 ## Publication
