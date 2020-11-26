@@ -1,3 +1,6 @@
+# Match Them Up: Visually Explainable Few-shot Image Classification
+[PDF](https://arxiv.org/abs/2011.12527)
+
 ## Model Structure
 ![Structure Figure](figs/overall.png)
 
@@ -71,4 +74,10 @@ python test_fsl.py --random False --interval 10 --dataset miniImageNet --base_mo
 ##### Visualization of MTUNet
 ```
 python vis_fsl.py --random False --interval 10 --dataset miniImageNet --base_model resnet18 --channel 512 --num_classes 64 --data_root "../FSL_data"
+```
+
+## Publication
+If you want to use this work, please consider citing the following paper.
+```
+
 ```
