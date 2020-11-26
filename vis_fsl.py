@@ -95,6 +95,7 @@ if __name__ == '__main__':
     args.num_slot = len(selection)
     args.query = 1
     args.vis = True
+    args.double = True
     args.fsl = True
     args.slot_base_train = False
     saved_name = (f"{args.dataset}_{args.base_model}_slot{args.num_slot}_" + 'fsl_checkpoint.pth')

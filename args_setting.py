@@ -20,7 +20,7 @@ def get_args_parser():
 
     parser.add_argument('--train_episodes', default=500, type=int)
     parser.add_argument('--val_episodes', default=2000, type=int)
-    parser.add_argument('--test_episodes', default=10000, type=int)
+    parser.add_argument('--test_episodes', default=2000, type=int)
 
     # train setting
     parser.add_argument('--fsl', default=True, type=bool, help='whether fsl model')
@@ -33,6 +33,7 @@ def get_args_parser():
     parser.add_argument('--aug', default=True, help='whether use augmentation')
     parser.add_argument('--use_slot', default=True, type=bool, help='whether use slot module')
     parser.add_argument('--fix_parameter', default=True, type=bool, help='whether fix parameter for backbone')
+    parser.add_argument('--double', default=False, type=bool, help='whether double mode')
 
     # slot setting
     parser.add_argument('--num_slot', default=7, type=int, help='number of slot')

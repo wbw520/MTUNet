@@ -47,7 +47,7 @@ class ScouterAttention(nn.Module):
             dots = torch.div(dots, dots.sum(2).expand_as(dots.permute([2,0,1])).permute([1,2,0])) * dots.sum(2).sum(1).expand_as(dots.permute([1,2,0])).permute([2,0,1])# * 10
             if self.args.slot_base_train:
                 attn = torch.sigmoid(dots)
-            elif self.args.vis:
+            elif self.args.double:
                 attn1 = dots.softmax(dim=1)
                 attn2 = dots.softmax(dim=1)
                 attn = attn1*attn2

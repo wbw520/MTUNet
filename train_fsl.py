@@ -71,6 +71,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser('model training and evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
     args.slot_base_train = False
+    args.double = False
     args.fsl = True
     if args.random:
         selection = np.random.randint(0, args.num_classes, args.num_slot)
