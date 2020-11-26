@@ -76,6 +76,13 @@ python test_fsl.py --random False --interval 10 --dataset miniImageNet --base_mo
 python vis_fsl.py --random False --interval 10 --dataset miniImageNet --base_model resnet18 --channel 512 --num_classes 64 --data_root "../FSL_data"
 ```
 
+#### Patterns visualization
+![Patterns visualization](figs/patterns.png)
+
+#### Matching matrix
+<img src="https://github.com/wbw520/MTUNet/figs/matrix.png" width="250" height="250" alt="matrix">
+
+
 ## Publication
 If you want to use this work, please consider citing the following paper.
 ```
