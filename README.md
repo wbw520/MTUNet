@@ -1,5 +1,5 @@
 # Match Them Up: Visually Explainable Few-shot Image Classification
-[PDF](https://arxiv.org/abs/2011.12527)
+[PDF](https://openaccess.thecvf.com/content/CVPR2021W/RCV/papers/Wang_MTUNet_Few-Shot_Image_Classification_With_Visual_Explanations_CVPRW_2021_paper.pdf)
 
 ## Model Structure
 ![Structure Figure](figs/overall.png)
