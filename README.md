@@ -87,7 +87,7 @@ If you want to use this work, please consider citing the following paper.
 ```
 @inproceedings{wang2021mtunet,
  author = {Wang, Bowen and Li, Liangzhi and Verma, Manisha and Nakashima, Yuta and Kawasaki, Ryo and Nagahara, Hajime},
- booktitle = {IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Responsible Computer Vision Workshop},
+ booktitle = {IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshop},
  pages = {},
  title = {MTUNet: Few-shot Image Classification with Visual Explanations},
  year = {2021}
