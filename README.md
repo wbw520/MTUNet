@@ -85,10 +85,11 @@ python vis_fsl.py --random False --interval 10 --dataset miniImageNet --base_mod
 ## Publication
 If you want to use this work, please consider citing the following paper.
 ```
-@article{wang2020match,
-  title={Match Them Up: Visually Explainable Few-shot Image Classification},
-  author={Wang, Bowen and Li, Liangzhi and Verma, Manisha and Nakashima, Yuta and Kawasaki, Ryo and Nagahara, Hajime},
-  journal={arXiv preprint arXiv:2011.12527},
-  year={2020}
+@inproceedings{wang2021mtunet,
+ author = {Wang, Bowen and Li, Liangzhi and Verma, Manisha and Nakashima, Yuta and Kawasaki, Ryo and Nagahara, Hajime},
+ booktitle = {IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Responsible Computer Vision Workshop},
+ pages = {},
+ title = {MTUNet: Few-shot Image Classification with Visual Explanations},
+ year = {2021}
 }
 ```
