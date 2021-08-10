@@ -1,5 +1,5 @@
 # Match Them Up: Visually Explainable Few-shot Image Classification
-[PDF](https://arxiv.org/abs/2011.12527)
+[PDF](https://openaccess.thecvf.com/content/CVPR2021W/RCV/papers/Wang_MTUNet_Few-Shot_Image_Classification_With_Visual_Explanations_CVPRW_2021_paper.pdf)
 
 ## Model Structure
 ![Structure Figure](figs/overall.png)
@@ -85,5 +85,11 @@ python vis_fsl.py --random False --interval 10 --dataset miniImageNet --base_mod
 ## Publication
 If you want to use this work, please consider citing the following paper.
 ```
-
+@inproceedings{wang2021mtunet,
+ author = {Wang, Bowen and Li, Liangzhi and Verma, Manisha and Nakashima, Yuta and Kawasaki, Ryo and Nagahara, Hajime},
+ booktitle = {IEEE/CVF Conference on Computer Vision and Pattern Recognition Workshop},
+ pages = {},
+ title = {MTUNet: Few-shot Image Classification with Visual Explanations},
+ year = {2021}
+}
 ```
