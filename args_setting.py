@@ -6,7 +6,7 @@ def get_args_parser():
 
     # dataset setting
     parser.add_argument('--dataset', default="miniImageNet", type=str)
-    parser.add_argument('--data_root', default="/home/wbw/PAN/FSL_data", type=str)
+    parser.add_argument('--data_root', default="/media/wbw/a7f02863-b441-49d0-b546-6ef6fefbbc7e/FSL_data/", type=str)
 
     # model setting
     parser.add_argument('--base_model', default='resnet18', type=str)

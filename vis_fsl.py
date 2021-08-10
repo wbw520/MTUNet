@@ -92,6 +92,7 @@ if __name__ == '__main__':
     else:
         selection = np.arange(0, args.num_classes, args.interval)
     args.num_slot = len(selection)
+    print(args.num_slot)
     args.query = 1
     args.vis = True
     args.double = True

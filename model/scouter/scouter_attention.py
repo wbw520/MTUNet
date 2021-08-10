@@ -16,8 +16,7 @@ class ScouterAttention(nn.Module):
         self.loss_status = loss_status
 
         slots_mu = nn.Parameter(torch.randn(1, 1, dim))
-        slots_sigma = nn.Parameter(torch.randn(1, 1, dim))
-
+        slots_sigma = nn.Parameter(torch.abs(torch.randn(1, 1, dim)))
         mu = slots_mu.expand(1, self.num_slots, -1)
         sigma = slots_sigma.expand(1, self.num_slots, -1)
         self.initial_slots = nn.Parameter(torch.normal(mu, sigma))
