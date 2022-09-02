@@ -92,4 +92,13 @@ If you want to use this work, please consider citing the following paper.
  title = {MTUNet: Few-shot Image Classification with Visual Explanations},
  year = {2021}
 }
+
+@article{wang2022match,
+  title={Match them up: visually explainable few-shot image classification},
+  author={Wang, Bowen and Li, Liangzhi and Verma, Manisha and Nakashima, Yuta and Kawasaki, Ryo and Nagahara, Hajime},
+  journal={Applied Intelligence},
+  pages={1--22},
+  year={2022},
+  publisher={Springer}
+}
 ```
